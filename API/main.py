@@ -597,7 +597,7 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "check_heights" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
             "check_floor_number_check" : (result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
             "fassade_length_check" : True,
-            "grenzabstand_check" : grenzabstand_check(building_Plot,boundary_95_rotated,5)
+            "grenzabstand_check" : False
 
 
 

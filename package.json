@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@apollo/client": "^3.12.11",
-    "@speckle/objectloader": "^2.23.6",
-    "@speckle/viewer": "^2.23.6",
-    "graphql-ws": "^6.0.3"
-  }
-}

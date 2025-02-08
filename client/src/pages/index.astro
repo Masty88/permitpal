@@ -154,23 +154,16 @@ import ObjectLoader from '@speckle/objectloader';
 </style>
 
 <script>
-    const SPECKLE_SERVER = "https://app.speckle.systems/";
-    const SPECKLE_TOKEN = "49975d1aef7ab713cd511b39036e9bd75b7e51d50a";
-	const PROJECT_ID = "ac4a00b20e";
-	const API_ENDPOINT = `${SPECKLE_SERVER}/api/v1/objects/${PROJECT_ID}`;
-    const PYTHON_API = "http://localhost:8000";
+    const PYTHON_API = "http://127.0.0.1:8000";
 
-    let apolloClient;
-    let subscription;
     let viewer;
-    let currentStreamId = null;
 
 
     async function uploadToPython(file) {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${PYTHON_API}/api/upload`, {
+        const response = await fetch(`${PYTHON_API}/upload`, {
             method: 'POST',
             body: formData
         });
@@ -180,27 +173,6 @@ import ObjectLoader from '@speckle/objectloader';
         }
 
         return await response.json();
-    }
-
-    async function uploadToSpeckle(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-		const response = await fetch(`${API_ENDPOINT}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SPECKLE_TOKEN}`,
-        },
-        body: formData
-      });
-
-        if (!response.ok) {
-            console.error('Speckle upload failed:', response.statusText);
-        }
-
-        const result = await response.json();
-        currentStreamId = result.streamId; // Save the stream ID for subscriptions
-        return result;
     }
 
     function updateStatus(message, type) {
@@ -232,36 +204,15 @@ import ObjectLoader from '@speckle/objectloader';
             updateStatus('Uploading...', 'processing');
 
             // Upload to both services in parallel
-            const [ speckleResponse] = await Promise.all([
-                //uploadToPython(file),
-                uploadToSpeckle(file)
+            const [ pythonResponse] = await Promise.all([
+                uploadToPython(file),
             ]);
 
-            // Initialize viewer and load model
-            await initViewer();
-            await viewer.loadObject(
-                `${SPECKLE_SERVER}/streams/${speckleResponse.streamId}/objects/${speckleResponse.objectId}`,
-                {
-                    token: SPECKLE_TOKEN,
-                    serverUrl: SPECKLE_SERVER,
-                }
-            );
-            viewer.zoomExtents();
-
-            // Start subscription with the new stream ID
-            startSubscription(speckleResponse.streamId);
-
-            updateStatus('Upload completed successfully!', 'success');
-            document.getElementById('results').innerHTML = `
-                <div class="result-item">
-                    <strong>Python API:</strong> ${pythonResponse.message}
-                </div>
-                <div class="result-item">
-                    <strong>Speckle:</strong>
-                    <a href="${SPECKLE_SERVER}/streams/${speckleResponse.streamId}" target="_blank">
-                        View on Speckle
-                    </a>
-                </div>
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>Results</h2>
+                <pre>${JSON.stringify(pythonResponse, null, 2)}</pre>
             `;
 
         } catch (error) {

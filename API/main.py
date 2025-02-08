@@ -17,6 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import importlib
 from speckle_transform import IFCToSpeckle
+import math
+import shapely
 
 
 # directory to save uploaded files
@@ -144,7 +146,7 @@ def save_to_json(data, file_path):
     with open(file_path, "w", encoding="utf-8") as json_file:
         json.dump(serializable_data, json_file, indent=4)
 
-    print(f"Data saved to {file_path}")
+    #print(f"Data saved to {file_path}")
 
 def get_floor_area(model):
     """Use get_floor_area for more complex files where area might be stored in related properties or element quantities,
@@ -230,12 +232,7 @@ def plot_building_and_zoning(building_polygon, zoning_map, lv95_coords, vertices
         x_building, y_building = building_polygon.exterior.xy
         ax.fill(x_building, y_building, color='red', alpha=0.5, label="Building Polygon")
 
-    # If vertices are provided, plot the additional polygon
-    if vertices:
-        # Create the polygon from the vertices
-        poly = Polygon(vertices)
-        x_poly, y_poly = poly.exterior.xy
-        ax.fill(x_poly, y_poly, color='blue', alpha=0.5, label="Additional Polygon")
+
 
     # Calculate the bounding box of both the building polygon and the additional polygon
     minx_building, miny_building, maxx_building, maxy_building = building_polygon.bounds
@@ -296,7 +293,7 @@ def dms_to_decimal(degrees, minutes, seconds, microseconds=0):
     # Now convert DMS to decimal degrees
     decimal_value = degrees + (minutes / 60) + ((seconds + (milliseconds / 1000)) / 3600)
 
-    print(f"DMS to Decimal: {degrees}° {minutes}' {seconds}\" {microseconds}µs → {decimal_value}")  # Debug print
+    #print(f"DMS to Decimal: {degrees}° {minutes}' {seconds}\" {microseconds}µs → {decimal_value}")  # Debug print
     return decimal_value
 
 def get_ifc_site_coordinates(model):
@@ -334,7 +331,7 @@ def wgs84_to_lv95(latitude, longitude):
     """Convert WGS84 (EPSG:4326) to Swiss LV95 (EPSG:2056)."""
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:2056", always_xy=True)
     easting, northing = transformer.transform(longitude, latitude)
-    print(f"WGS84 to LV95: {latitude}, {longitude} → {easting}, {northing}")  # Debug
+    #print(f"WGS84 to LV95: {latitude}, {longitude} → {easting}, {northing}")  # Debug
     return easting, northing
 
 """Here is for comparing"""
@@ -448,18 +445,27 @@ def get_absolute_coordinates(placement):
 def extract_site_coordinates(model):
 
     for site in model.by_type("IfcMapConversion"):
-        print(site)
         easting = getattr(site, "Eastings", None)  # Ensure it exists
         northing = getattr(site, "Northings", None)  # Ensure it exists)
 
     return (easting,northing)
 
+def extract_site_rotation(model):
+
+    for site in model.by_type("IfcGeometricRepresentationContext"):
+        rotation = getattr(site, "TrueNorth", None)  # Ensure it exists
+    print("this is the rotation")
+    print(rotation)
+
+
+    return (rotation)
+
 def get_lv95_coords(path):
     """
     """
     model = ifcopenshell.open(path)
-    print("test coords")
-    print(get_ifc_site_coordinates(model))
+    #print("test coords")
+    #print(get_ifc_site_coordinates(model))
     world_coords = get_world_coordinates(model)
 
 
@@ -471,7 +477,7 @@ def get_lv95_coords(path):
         latitude = dms_to_decimal(*lat_dms)
         longitude = dms_to_decimal(*lon_dms)
 
-        print(f"Converted WGS84: Lat = {latitude}, Lon = {longitude}")
+        #print(f"Converted WGS84: Lat = {latitude}, Lon = {longitude}")
 
         # Convert to Swiss LV95
         lv95_coords = wgs84_to_lv95(latitude, longitude)
@@ -481,6 +487,20 @@ def get_lv95_coords(path):
         # Get floor vertices
 
     return lv95_coords
+
+
+def get_north_rotation(north_vector):
+    """
+    Returns a function to rotate points so that the given north_vector aligns with (0,1).
+    
+    Args:
+        north_vector (tuple): A tuple (north_x, north_y) representing the IfcDirection.
+
+    Returns:
+        function: A function that rotates (x, y) coordinates accordingly.
+    """
+    return math.atan(north_vector[1]/north_vector[0])
+
 
 def get_Building_data(path, zoning_map_path, plot_map_path):
     """
@@ -494,18 +514,29 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
 
 
     lv95_coords = extract_site_coordinates(model)
+    rotation = extract_site_rotation(model)
+    print(type(rotation))
+    rotation_XY= (rotation[0][0],rotation[0][1]) 
+    print(rotation_XY)
+    angle = math.degrees(get_north_rotation(rotation_XY))+90
+    angle = -angle
     vertices = get_floor_vertices(model)
+    
     boundary_polygon = get_boundary_polygon(vertices)
     vertices_95 = move_vertices(vertices, lv95_coords[0], lv95_coords[1])
     boundary_polygon_lv95 = get_boundary_polygon(vertices_95)
-    centroid = get_centroid(boundary_polygon)
+    boundary_95_rotated = shapely.affinity.rotate(boundary_polygon_lv95,angle,lv95_coords)
+    vertices_95_rotated = shapely.affinity.rotate(shapely.MultiPoint(vertices_95),angle,lv95_coords)
+    centroid_lv95 = get_centroid(boundary_95_rotated)
+    print("centroid")
+    print(centroid_lv95)
 
     # We are going to use the centroid of the polygonal projection of the slabs to get the position of the building.
-    centroid_lv95 = [centroid.x + lv95_coords[0], centroid.y + lv95_coords[1]]
+    #centroid_lv95 = [centroid.x + lv95_coords[0], centroid.y + lv95_coords[1]]
 
 
     # Generate building coordinates
-    center_x, center_y = centroid_lv95[0], centroid_lv95[1]
+    center_x, center_y = centroid_lv95.x, centroid_lv95.y
     building_coords = generate_building_coords(center_x, center_y)
     building_polygon = Polygon(building_coords)
 
@@ -514,8 +545,8 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
 
     # Check plot
     building_Plot = check_plot(building_polygon, plot_map)
-    print("Plot ID")
-    print(building_Plot.R1_EGRIS_E)
+    #("Plot ID")
+    #print(building_Plot.R1_EGRIS_E)
 
 
 
@@ -525,20 +556,29 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
         "floors": len(model.by_type("IfcBuildingStorey")),
         "floor_area": get_floor_area(model),
         "Georeference": lv95_coords, 
-        "Centroid": centroid_lv95
+        "Centroid": centroid_lv95,
+        "Rotation": angle
  
     }
-
+    
     # Store zoning information if available (only first matching zone)
     #if not zoning_with_building.empty:
-    first_zone = zoning_with_building.iloc[0]  # Take the first matching zoning entry
+    print("testing rotation issues")
+    first_zone = zoning_with_building  # Take the first matching zoning entry
     building_data.update({
-            "OBJID": first_zone['OBJID'],
+            #"OBJID": first_zone['OBJID'],
             "R1_CODE": first_zone['R1_CODE'],
             "R1_BEZEICH": first_zone['R1_BEZEICH'],
-            "R1_TYP_KAN": first_zone['R1_TYP_KAN'],
-            "Plot ID": building_Plot.R1_EGRIS_E.values
-
+            "R1_Abkuerz": first_zone['R1_ABKUERZ'],
+            "Plot ID": building_Plot.R1_EGRIS_E.values,
+            "Plot Area": building_Plot.geometry.area,
+            "Wohnanteil": first_zone['WOHNANTEIL'],
+            "Wohnanteil": first_zone['WOHNANTEIL'],
+            "Ausnuetzungsziffer Max": first_zone['AUSNUETZU1'],
+            "Maximum building length": "nAn",
+            "Anrechenbares Untergeschoss max.": 0,
+            "anrechenbares Dachgeschoss max.": 1,
+            "Grundgrenzabstand": 5
 
         })
 
@@ -549,10 +589,10 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
     # Save data to JSON
 
     save_to_json(building_data, "building_data.json")
-    print("JSON saved successfully:", building_data)
+    #print("JSON saved successfully:", building_data)
 
     # Visualization
-    plot_building_and_zoning(boundary_polygon_lv95, plot_map, lv95_coords, vertices_95, zoom_factor=2)
+    plot_building_and_zoning(boundary_95_rotated, plot_map, lv95_coords, vertices_95, zoom_factor=2)
 
     return building_data
 

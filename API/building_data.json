@@ -3,21 +3,33 @@
     "floors": 9,
     "floor_area": "Unknown area",
     "Georeference": "(2686343.037263768, 1250754.3092457172)",
-    "Centroid": [
-        2686354.8293442717,
-        1250767.4532629175
+    "Centroid": "POINT (2686350.6653389335 1250738.383454684)",
+    "Rotation": -112.50999999999992,
+    "R1_CODE": [
+        "C110411"
     ],
-    "OBJID": "z5542320535d901d1",
-    "R1_CODE": "C110411",
-    "R1_BEZEICH": "viergeschossige Wohnzone",
-    "R1_TYP_KAN": "GN_Typ_Kanton[z58e3d68f4ee5000",
+    "R1_BEZEICH": [
+        "viergeschossige Wohnzone"
+    ],
+    "R1_Abkuerz": [
+        "W4"
+    ],
     "Plot ID": [
-        "CH399970149101",
-        "CH286299917953",
-        "CH156299799163",
-        "CH119162997983",
-        "CH199979629138"
+        "CH286299917953"
     ],
+    "Plot Area": [
+        1004.7436964971262
+    ],
+    "Wohnanteil": [
+        75.0
+    ],
+    "Ausnuetzungsziffer Max": [
+        120
+    ],
+    "Maximum building length": "nAn",
+    "Anrechenbares Untergeschoss max.": 0,
+    "anrechenbares Dachgeschoss max.": 1,
+    "Grundgrenzabstand": 5,
     "Max Building Height": 12.5,
     "Total Allowed Height": -99.0,
     "Max Full Floors": 4,

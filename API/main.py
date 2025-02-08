@@ -694,6 +694,42 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     return response_data
 
+"""
+Comparisons functions
+
+"""
+def heights_check(height, max_height):
+    if float(height) > float(max_height):
+        return False
+    else:
+        return True
+    return None
+
+def floor_number_check(floor):
+    return None
+
+def fassade_length_check():
+    return None
+
+def grenzabstand_check():
+    return None
+
+def untergeschoss_check():
+    return None
+
+def attik_check():
+    return None
+
+def building_length_check():
+    return None
+
+def floor_area_Ratio():
+    return None
+
+
+
+
+
 @app.post("/upload-to-speckle/")
 async def upload_to_speckle_route(file: UploadFile = File(...)):
     """Endpoint per caricare un file IFC su Speckle con conversione dettagliata"""

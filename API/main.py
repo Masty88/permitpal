@@ -20,7 +20,7 @@ from speckle_transform import IFCToSpeckle
 from speckle_object import send_to_speckle
 import math
 import shapely
-
+from process_geometry.run_all import main
 
 # directory to save uploaded files
 UPLOAD_FOLDER = "uploads"
@@ -505,7 +505,7 @@ def get_north_rotation(north_vector):
     return math.atan(north_vector[1]/north_vector[0])
 
 
-def get_Building_data(path, zoning_map_path, plot_map_path):
+def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     """
     Function to extract building data and zoning information, including restrictions.
     """
@@ -513,7 +513,6 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
     model = ifcopenshell.open(path)
     zoning_map = gpd.read_file(zoning_map_path)
     plot_map = gpd.read_file(plot_map_path)
-
 
 
     lv95_coords = extract_site_coordinates(model)
@@ -550,20 +549,32 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
     building_Plot = check_plot(building_polygon, plot_map)
     #("Plot ID")
     #print(building_Plot.R1_EGRIS_E)
+    areas = result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["net_area"]
 
-
+    # Calculate the total area
+    total_area = sum(areas.values())
 
     # Initialize building data dictionary
     building_data = {
-        "height": get_building_height_complex(model)[0],
-        "floors": len(model.by_type("IfcBuildingStorey")),
-        "floor_area": get_floor_area(model),
+        "heighest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
+        "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
+        "number_of_floors": result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],
+        "total_floor_area": total_area,
+        "ground_floor_area": result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["Ground Floor"],
+        "facade_length_1": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_1"],
+        "facade_length_2": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_2"],
+        "facade_length_3": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_3"],
+        "facade_length_4": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_4"],
+        "number_of_underground_level": 1,
+        "facades": result_from_ata["LeopoldPointBuilding_01.Full_2x3_external_walls"],
+        "Plot Area": building_Plot.geometry.area,
         "Georeference": lv95_coords, 
         "Centroid": centroid_lv95,
         "Rotation": angle
- 
     }
     
+    floor_area_ratio = building_data["ground_floor_area"]/building_data["Plot Area"]
+    building_to_land_area = building_data["total_floor_area"]/building_data["Plot Area"]
     # Store zoning information if available (only first matching zone)
     #if not zoning_with_building.empty:
     print("testing rotation issues")
@@ -574,9 +585,10 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
             "R1_BEZEICH": first_zone['R1_BEZEICH'],
             "R1_Abkuerz": first_zone['R1_ABKUERZ'],
             "Plot ID": building_Plot.R1_EGRIS_E.values,
-            "Plot Area": building_Plot.geometry.area,
             "Wohnanteil": first_zone['WOHNANTEIL'],
             "Wohnanteil": first_zone['WOHNANTEIL'],
+            "getFloorAreaRatio": floor_area_ratio,
+            "getBuildingToLandArea": building_to_land_area,
             "Ausnuetzungsziffer Max": first_zone['AUSNUETZU1'],
             "Maximum building length": "nAn",
             "Anrechenbares Untergeschoss max.": 0,
@@ -650,7 +662,7 @@ async def upload_ifc(file: UploadFile = File(...)):
     ifc_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(ifc_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-
+    result_from_ata = main(ifc_path)
     # Load the existing SHP file
     if os.path.exists(zoning_map_path):
         try:
@@ -663,7 +675,7 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     # Process the IFC file
     try:
-         building_data = get_Building_data(path, zoning_map_path, plot_map_path)
+         building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
     except Exception as e:
         return {"error": f"Failed to process IFC file: {str(e)}"}
 
@@ -678,11 +690,9 @@ async def upload_ifc(file: UploadFile = File(...)):
     speckle_response = await send_to_speckle(response_data, SPECKLE_TOKEN, DATA_ID)
     print("Speckle send complete:", speckle_response)
 
-    # Add Speckle info to response
     response_data["speckle"] = speckle_response
 
     return response_data
-
 
 @app.post("/upload-to-speckle/")
 async def upload_to_speckle_route(file: UploadFile = File(...)):

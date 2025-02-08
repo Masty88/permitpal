@@ -13,12 +13,29 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Polygon
 from pyproj import Transformer
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # directory to save uploaded files
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:4321",  # Allow requests from your Astro client
+    "http://localhost",       # Allow requests from localhost
+    "http://127.0.0.1:4321",  # Allow requests from 127.0.0.1
+    "*", # allow all origins
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 
 """ifcopenshell functions"""
@@ -62,7 +79,7 @@ def get_building_height_complex(model):
 
 def get_floor_area_simple(model):
     """
-    Use get_floor_area_first_test if your file structure is simple and uses properties directly on elements 
+    Use get_floor_area_first_test if your file structure is simple and uses properties directly on elements
     (like GrossFloorArea or NetArea on storeys, slabs, or spaces)
     """
     total_area = 0
@@ -71,7 +88,7 @@ def get_floor_area_simple(model):
     for storey in model.by_type("IfcBuildingStorey"):
         if hasattr(storey, "GrossFloorArea") and storey.GrossFloorArea is not None:
             total_area += storey.GrossFloorArea
-    
+
     # If no GrossFloorArea, sum up areas from IfcSlab
     if total_area == 0:
         for slab in model.by_type("IfcSlab"):
@@ -122,7 +139,7 @@ def save_to_json(data, file_path):
     print(f"Data saved to {file_path}")
 
 def get_floor_area(model):
-    """Use get_floor_area for more complex files where area might be stored in related properties or element quantities, 
+    """Use get_floor_area for more complex files where area might be stored in related properties or element quantities,
     and if you want more flexibility in handling different ways area data can be structured
     """
     total_area = 0
@@ -132,7 +149,7 @@ def get_floor_area(model):
         for relDefinesByProperties in storey.IsDefinedBy:
             if relDefinesByProperties.is_a("IfcRelDefinesByProperties"):
                 propSet = relDefinesByProperties.RelatingPropertyDefinition
-                
+
                 # If area is in IfcPropertySet
                 if propSet.is_a("IfcPropertySet"):
                     for prop in propSet.HasProperties:
@@ -155,7 +172,7 @@ def generate_building_coords(center_x, center_y, width=12, length=24):
     """
     half_width = width / 2
     half_length = length / 2
-    
+
     return [
         (center_x + half_width, center_y + half_length),
         (center_x - half_width, center_y + half_length),
@@ -177,7 +194,7 @@ def plot_building_and_zoning(building_polygon, zoning_map, lv95_coords, vertices
     """
     Plot the zoning map, the building polygon, and an additional polygon from vertices.
     Also zooms into the area of both polygons and adds a red point at the building's center.
-    
+
     :param building_polygon: The building polygon to plot.
     :param zoning_map: The zoning map to plot as the background.
     :param lv95_coords: Coordinates to add a red point (typically the centroid or center of the building).
@@ -194,7 +211,7 @@ def plot_building_and_zoning(building_polygon, zoning_map, lv95_coords, vertices
     if building_polygon:
         x_building, y_building = building_polygon.exterior.xy
         ax.fill(x_building, y_building, color='red', alpha=0.5, label="Building Polygon")
-    
+
     # If vertices are provided, plot the additional polygon
     if vertices:
         # Create the polygon from the vertices
@@ -353,14 +370,14 @@ def get_boundary_polygon_lv95(vertices, lv95_coords):
     """
     Move the vertices by adding LV95 coordinates to their x and y values.
     Project the 3D points onto a 2D plane (X, Y) and compute the boundary polygon.
-    
+
     :param vertices: List of tuples with (x, y, z) coordinates.
     :param lv95_coords: Tuple of LV95 coordinates (lv95_x, lv95_y).
     :return: A polygon representing the boundary.
     """
     # Shift the x and y values of each vertex by the LV95 coordinates
     shifted_points = [(x + lv95_coords[0], y + lv95_coords[1]) for x, y, _ in vertices]
-    
+
     # Compute the convex hull (outer boundary)
     multipoint = MultiPoint(shifted_points)
     boundary_polygon = multipoint.convex_hull  # This creates the polygon
@@ -385,7 +402,7 @@ def move_vertices(vertices, x_translation, y_translation):
     """
     # Apply the translation vector to each vertex
     translated_vertices = [(x + x_translation, y + y_translation, z) for x, y, z in vertices]
-    
+
     return translated_vertices
 
 """Here is for testing"""
@@ -433,7 +450,7 @@ def get_lv95_coords(path):
         lat_dms, lon_dms = world_coords  # Unpack tuple of tuples
 
         # Convert DMS to Decimal
-        latitude = dms_to_decimal(*lat_dms)  
+        latitude = dms_to_decimal(*lat_dms)
         longitude = dms_to_decimal(*lon_dms)
 
         print(f"Converted WGS84: Lat = {latitude}, Lon = {longitude}")
@@ -469,7 +486,7 @@ def get_Building_data(path, zoning_map_path):
 
 
     # Generate building coordinates
-    center_x, center_y = centroid_lv95[0], centroid_lv95[1]  
+    center_x, center_y = centroid_lv95[0], centroid_lv95[1]
     building_coords = generate_building_coords(center_x, center_y)
     building_polygon = Polygon(building_coords)
 
@@ -541,7 +558,7 @@ if __name__ == "__main__":
             print("SHP file missing")
 
     else:
-        print("IFC file missing")    
+        print("IFC file missing")
 
 UPLOAD_DIR = "uploads"
 
@@ -551,6 +568,7 @@ def read_root():
 
 @app.post("/upload/")
 async def upload_ifc(file: UploadFile = File(...)):
+    print(f"Received file: {file.filename}")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
     # Save the uploaded IFC file
@@ -582,5 +600,4 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     return response_data
 
-    
-    
+

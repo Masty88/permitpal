@@ -1,6 +1,9 @@
 ---
 // src/pages/upload.astro
 ---
+<script>
+
+</script>
 
 <html lang="en">
 <head>
@@ -109,14 +112,81 @@
         border-radius: 4px;
         white-space: pre-wrap;
     }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .viewer-container {
+        width: 100%;
+        height: 600px;
+        background: #f5f5f5;
+        margin-top: 2rem;
+        border-radius: 4px;
+        position: relative;
+    }
+
+    #renderer {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
 </style>
 
 
 <script>
+    import {
+        Viewer,
+        DefaultViewerParams,
+        SpeckleLoader,
+        UrlHelper
+    } from "@speckle/viewer";
+    import { CameraController, SelectionExtension } from "@speckle/viewer";
+
+
+    const SPECKLE_SERVER = "https://app.speckle.systems";
     const PYTHON_API = "http://127.0.0.1:8000";
+    let viewer = null as any;
+
+async function initViewer() {
+    const container = document.getElementById("viewer") as HTMLDivElement;
+    const rendererDiv = document.createElement('div') as HTMLDivElement;
+    rendererDiv.id = 'renderer';
+    container.appendChild(rendererDiv);
+
+    const params = DefaultViewerParams;
+    params.showStats = true;
+    params.verbose = true;
+
+    viewer = new Viewer(rendererDiv, params);
+    await viewer.init();
+
+    viewer.createExtension(CameraController);
+    viewer.createExtension(SelectionExtension);
+}
+
+async function loadSpeckleModel(streamId: any, objectId: any) {
+    if (!viewer) {
+        await initViewer();
+    }
+
+    const urls = await UrlHelper.getResourceUrls(
+        `${SPECKLE_SERVER}/streams/${streamId}/objects/${objectId}`
+    );
+
+    for (const url of urls) {
+        const loader = new SpeckleLoader(viewer.getWorldTree(), url, "");
+        await viewer.loadObject(loader, true);
+    }
+}
     const processButton = document.getElementById('processButton');
 
-    async function uploadToPython(file) {
+    async function uploadToPython(file: string | Blob) {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -132,7 +202,7 @@
         return await response.json();
     }
 
-    async function uploadToSpeckle(file) {
+    async function uploadToSpeckle(file: string | Blob) {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -148,19 +218,19 @@
         return await response.json();
     }
 
-    function updateStatus(message, type) {
+    function updateStatus(message: string | null, type: string) {
         const statusDiv = document.getElementById('status');
         statusDiv.textContent = message;
         statusDiv.className = `status ${type}`;
     }
 
-    function setFormEnabled(enabled) {
+    function setFormEnabled(enabled: boolean) {
         const form = document.getElementById('uploadForm');
         const inputs = form.querySelectorAll('input, button');
         inputs.forEach(input => input.disabled = !enabled);
     }
 
-    function displayResults(data) {
+    function displayResults(data: { pythonAnalysis: any; speckleUpload: any; }) {
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = `
             <h2>Results</h2>
@@ -180,22 +250,27 @@
         try {
             setFormEnabled(false);
 
-            // Step 1: Python Analysis
             updateStatus('Analyzing IFC file...', 'processing');
             const pythonResult = await uploadToPython(file);
 
-            // Step 2: Speckle Upload
             updateStatus('Uploading to Speckle...', 'processing');
             const speckleResult = await uploadToSpeckle(file);
 
-            // Combine and display results
             const combinedResults = {
                 pythonAnalysis: pythonResult,
                 speckleUpload: speckleResult
             };
 
             displayResults(combinedResults);
-            updateStatus('Processing complete!', 'success');
+            updateStatus('Processing complete! Loading viewer...', 'success');
+
+            // Carica il modello nel viewer usando i dati dalla risposta di Speckle
+            if (speckleResult?.data?.stream_id && speckleResult?.data?.object_id) {
+                await loadSpeckleModel(
+                    speckleResult.data.stream_id,
+                    speckleResult.data.object_id
+                );
+            }
 
         } catch (error) {
             console.error('Error:', error);

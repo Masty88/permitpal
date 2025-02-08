@@ -593,7 +593,13 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "Maximum building length": "nAn",
             "Anrechenbares Untergeschoss max.": 0,
             "anrechenbares Dachgeschoss max.": 1,
-            "Grundgrenzabstand": 5
+            "Grundgrenzabstand": 5,
+            "check_heights" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
+            "check_floor_number_check" : (result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
+            "fassade_length_check" : True,
+            "grenzabstand_check" : grenzabstand_check(building_Plot,boundary_95_rotated,5)
+
+
 
         })
 
@@ -703,28 +709,50 @@ def heights_check(height, max_height):
         return False
     else:
         return True
-    return None
 
-def floor_number_check(floor):
-    return None
 
-def fassade_length_check():
-    return None
+def floor_number_check(floor_number, floor_number_max):
+    if float(floor_number) > float(floor_number_max):
+        return False
+    else:
+        return True
 
-def grenzabstand_check():
-    return None
 
-def untergeschoss_check():
-    return None
+def fassade_length_check(fassade_length,fassade_length_max):
+    if float(fassade_length) > float(fassade_length_max):
+        return False
+    else:
+        return True
 
-def attik_check():
-    return None
 
-def building_length_check():
-    return None
+def grenzabstand_check(polygon_plot,polygon_building, grenzabstand):
+    grenzabstand_polygon = polygon_plot.buffer(-float(grenzabstand))
+    return not grenzabstand_polygon.intersects(polygon_building)
 
-def floor_area_Ratio():
-    return None
+
+def untergeschoss_check(untergeschoss_number,untergeschoss_max):
+    if float(untergeschoss_number) > float(untergeschoss_max):
+        return False
+    else:
+        return True
+
+def building_length_check(building_length, building_length_max):
+    if building_length != "nAn":
+        if float(building_length) > float(building_length_max):
+            return False
+        else:
+            return True
+    else:
+        return True
+
+def floor_area_Ratio(floor_area, floor_area_max):
+    if floor_area != float(-99):
+        if float(floor_area) > float(floor_area_max):
+            return False
+        else:
+            return True
+    else:
+        return True
 
 
 

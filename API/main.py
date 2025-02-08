@@ -264,7 +264,28 @@ def dms_to_decimal(degrees, minutes, seconds, microseconds=0):
     print(f"DMS to Decimal: {degrees}° {minutes}' {seconds}\" {microseconds}µs → {decimal_value}")  # Debug print
     return decimal_value
 
+def get_ifc_site_coordinates(model):
+    """Extracts geolocation from IfcSite (including Eastings/Northings)."""
+    for site in model.by_type("IfcSite"):
+        latitude = getattr(site, "RefLatitude", None)
+        longitude = getattr(site, "RefLongitude", None)
+        elevation = getattr(site, "RefElevation", None)
 
+        placement = getattr(site, "ObjectPlacement", None)
+        if placement:
+            local_placement = placement.RelativePlacement.Location.Coordinates
+            easting, northing = local_placement[0], local_placement[1]
+        else:
+            easting, northing = None, None
+
+        return {
+            "latitude": latitude,
+            "longitude": longitude,
+            "elevation": elevation,
+            "easting": easting,
+            "northing": northing
+        }
+    return None  # No IfcSite found.
 
 def get_world_coordinates(model):
     """Extracts WGS84 latitude and longitude from IfcSite."""
@@ -372,11 +393,42 @@ def move_vertices(vertices, x_translation, y_translation):
 
 """ Implementing functions to simplify """
 
+def get_absolute_coordinates(placement):
+    """Recursively calculates absolute Easting/Northing from IFC placements."""
+    if not placement or not hasattr(placement, "RelativePlacement"):
+        return [0, 0, 0]  # Default if no placement exists
+
+    # Get Local Placement Coordinates
+    location = placement.RelativePlacement.Location.Coordinates if hasattr(placement.RelativePlacement, "Location") else [0, 0, 0]
+    
+    # Check if PlacementRelTo exists (meaning it's nested)
+    parent_placement = getattr(placement, "PlacementRelTo", None)
+    
+    if parent_placement:
+        parent_coords = get_absolute_coordinates(parent_placement)
+        return [location[i] + parent_coords[i] for i in range(3)]
+    
+    return location  # If no parent, return local coordinates
+
+def extract_site_coordinates(model):
+
+    for site in model.by_type("IfcMapConversion"):
+        print(site)
+        easting = getattr(site, "Eastings", None)  # Ensure it exists
+        northing = getattr(site, "Northings", None)  # Ensure it exists)
+
+    return (easting,northing)
+
 def get_lv95_coords(path):
     """
     """
     model = ifcopenshell.open(path)
+    print("test coords")
+    print(get_ifc_site_coordinates(model)) 
     world_coords = get_world_coordinates(model)
+
+  
+
     if world_coords:
         lat_dms, lon_dms = world_coords  # Unpack tuple of tuples
 
@@ -402,8 +454,10 @@ def get_Building_data(path, zoning_map_path):
 
     model = ifcopenshell.open(path)
     zoning_map = gpd.read_file(zoning_map_path)
+    
 
-    lv95_coords = get_lv95_coords(path)
+
+    lv95_coords = extract_site_coordinates(model)
     vertices = get_floor_vertices(model)
     boundary_polygon = get_boundary_polygon(vertices)
     vertices_95 = move_vertices(vertices, lv95_coords[0], lv95_coords[1])
@@ -413,6 +467,7 @@ def get_Building_data(path, zoning_map_path):
     # We are going to use the centroid of the polygonal projection of the slabs to get the position of the building.
     centroid_lv95 = [centroid.x + lv95_coords[0], centroid.y + lv95_coords[1]]
 
+
     # Generate building coordinates
     center_x, center_y = centroid_lv95[0], centroid_lv95[1]  
     building_coords = generate_building_coords(center_x, center_y)
@@ -420,6 +475,8 @@ def get_Building_data(path, zoning_map_path):
 
     # Check zoning
     zoning_with_building = check_zoning(building_polygon, zoning_map)
+
+
 
     # Initialize building data dictionary
     building_data = {
@@ -429,9 +486,9 @@ def get_Building_data(path, zoning_map_path):
     }
 
     # Store zoning information if available (only first matching zone)
-    if not zoning_with_building.empty:
-        first_zone = zoning_with_building.iloc[0]  # Take the first matching zoning entry
-        building_data.update({
+    #if not zoning_with_building.empty:
+    first_zone = zoning_with_building.iloc[0]  # Take the first matching zoning entry
+    building_data.update({
             "OBJID": first_zone['OBJID'],
             "R1_CODE": first_zone['R1_CODE'],
             "R1_BEZEICH": first_zone['R1_BEZEICH'],
@@ -464,12 +521,14 @@ def ensure_serializable(obj):
         return obj.tolist()
     return str(obj)  # Convert unknown objects to strings
 
+import ifcopenshell
+
 
 # IFC Test File
-path = r"tests\Test_Esri.ifc"
+path = r"API/tests/LeopoldPointBuilding_01.Full_IFC4_GL_Zurich_2056.ifc"
 
 # SHP Test File
-zoning_map_path = r"data\Zonenplan.shp"
+zoning_map_path = r"API\data\Zonenplan.shp"
 
 
 # actual test

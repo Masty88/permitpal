@@ -495,7 +495,7 @@ def get_lv95_coords(path):
 def get_north_rotation(north_vector):
     """
     Returns a function to rotate points so that the given north_vector aligns with (0,1).
-    
+
     Args:
         north_vector (tuple): A tuple (north_x, north_y) representing the IfcDirection.
 
@@ -518,12 +518,12 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     lv95_coords = extract_site_coordinates(model)
     rotation = extract_site_rotation(model)
     print(type(rotation))
-    rotation_XY= (rotation[0][0],rotation[0][1]) 
+    rotation_XY= (rotation[0][0],rotation[0][1])
     print(rotation_XY)
     angle = math.degrees(get_north_rotation(rotation_XY))+90
     angle = -angle
     vertices = get_floor_vertices(model)
-    
+
     boundary_polygon = get_boundary_polygon(vertices)
     vertices_95 = move_vertices(vertices, lv95_coords[0], lv95_coords[1])
     boundary_polygon_lv95 = get_boundary_polygon(vertices_95)
@@ -568,11 +568,11 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
         "number_of_underground_level": 1,
         "facades": result_from_ata["LeopoldPointBuilding_01.Full_2x3_external_walls"],
         "Plot Area": building_Plot.geometry.area,
-        "Georeference": lv95_coords, 
+        "Georeference": lv95_coords,
         "Centroid": centroid_lv95,
         "Rotation": angle
     }
-    
+
     floor_area_ratio = building_data["ground_floor_area"]/building_data["Plot Area"]
     building_to_land_area = building_data["total_floor_area"]/building_data["Plot Area"]
     #Store zoning information if available (only first matching zone)
@@ -672,7 +672,6 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     result_from_ata = main(ifc_path)
     building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
-    building_data = get_Building_data(result_from_ata)
     print("This is the final building data: ", building_data)
     #Load the existing SHP file
     if os.path.exists(zoning_map_path):
@@ -683,7 +682,7 @@ async def upload_ifc(file: UploadFile = File(...)):
             return {"error": f"Failed to read SHP file: {str(e)}"}
     else:
         return {"error": "SHP file is missing on the server"}
-    
+
     try:
          building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
          print("This is the final building data: ", building_data)

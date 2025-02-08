@@ -645,7 +645,8 @@ if __name__ == "__main__":
     if os.path.exists(path):
         if os.path.exists(zoning_map_path):
             if os.path.exists(plot_map_path):
-                get_Building_data(path, zoning_map_path, plot_map_path)
+                result_from_ata = main(path)
+                get_Building_data(path, zoning_map_path,result_from_ata,plot_map_path)
 
         else:
             print("SHP file missing")

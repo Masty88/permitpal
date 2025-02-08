@@ -1,15 +1,31 @@
 {
-    "heighest": 22.994157028775764,
-    "lowest": -4.4,
-    "number_of_floors": 7,
-    "total_floor_area": 2053.1270080472705,
-    "ground_floor_area": 233.84898800000002,
-    "facade_length_1": 21.908858409427527,
-    "facade_length_2": 19.63500000000002,
-    "facade_length_3": 21.908858409427527,
-    "facade_length_4": 19.63500000000002,
-    "number_of_underground_level": 1,
-    "facades": [
+    "LeopoldPointBuilding_01.Full_2x3_xyz_extremes": {
+        "lowest_x": -0.14885840942750717,
+        "highest_x": 21.76000000000002,
+        "lowest_y": -3.465000000000048,
+        "highest_y": 16.169999999999973,
+        "lowest_z": -4.4,
+        "highest_z": 22.994157028775764
+    },
+    "LeopoldPointBuilding_01.Full_2x3_facade_lengths": {
+        "facade_length_1": 21.908858409427527,
+        "facade_length_2": 19.63500000000002,
+        "facade_length_3": 21.908858409427527,
+        "facade_length_4": 19.63500000000002
+    },
+    "LeopoldPointBuilding_01.Full_2x3_total_area_net_summary": {
+        "net_area": {
+            "Ground Floor": 233.84898800000002,
+            "Level 1": 291.3902933957249,
+            "Level 2": 291.3910063158929,
+            "Level 3": 291.3910063158929,
+            "Level 4": 291.3902933957248,
+            "Level 5": 305.62663099999935,
+            "Level -1": 348.0887896240354
+        },
+        "number_of_floors": 7
+    },
+    "LeopoldPointBuilding_01.Full_2x3_external_walls": [
         "1RoAAG3g19awzBpAQxsvc1",
         "1YYG1Ip4n2Vw3q1zKmnzBM",
         "1YYG1Ip4n2Vw3q1zKmnzDZ",

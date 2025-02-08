@@ -533,22 +533,22 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     print("centroid")
     print(centroid_lv95)
 
-    # We are going to use the centroid of the polygonal projection of the slabs to get the position of the building.
+    #We are going to use the centroid of the polygonal projection of the slabs to get the position of the building.
     #centroid_lv95 = [centroid.x + lv95_coords[0], centroid.y + lv95_coords[1]]
 
 
-    # Generate building coordinates
+    #Generate building coordinates
     center_x, center_y = centroid_lv95.x, centroid_lv95.y
     building_coords = generate_building_coords(center_x, center_y)
     building_polygon = Polygon(building_coords)
 
-    # Check zoning
+    # # Check zoning
     zoning_with_building = check_zoning(building_polygon, zoning_map)
 
-    # Check plot
+    # # Check plot
     building_Plot = check_plot(building_polygon, plot_map)
-    #("Plot ID")
-    #print(building_Plot.R1_EGRIS_E)
+    ("Plot ID")
+    print(building_Plot.R1_EGRIS_E)
     areas = result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["net_area"]
 
     # Calculate the total area
@@ -560,7 +560,7 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
         "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
         "number_of_floors": result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],
         "total_floor_area": total_area,
-        "ground_floor_area": result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["Ground Floor"],
+        "ground_floor_area": result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["net_area"]["Ground Floor"],
         "facade_length_1": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_1"],
         "facade_length_2": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_2"],
         "facade_length_3": result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_3"],
@@ -575,12 +575,12 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     
     floor_area_ratio = building_data["ground_floor_area"]/building_data["Plot Area"]
     building_to_land_area = building_data["total_floor_area"]/building_data["Plot Area"]
-    # Store zoning information if available (only first matching zone)
+    #Store zoning information if available (only first matching zone)
     #if not zoning_with_building.empty:
-    print("testing rotation issues")
+    #   print("testing rotation issues")
     first_zone = zoning_with_building  # Take the first matching zoning entry
     building_data.update({
-            #"OBJID": first_zone['OBJID'],
+            "OBJID": first_zone['OBJID'],
             "R1_CODE": first_zone['R1_CODE'],
             "R1_BEZEICH": first_zone['R1_BEZEICH'],
             "R1_Abkuerz": first_zone['R1_ABKUERZ'],
@@ -603,16 +603,16 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
 
         })
 
-    # Extract zoning restrictions and add them to building_data
+    # # Extract zoning restrictions and add them to building_data
     zoning_restrictions = extract_zoning_restrictions(zoning_with_building)
     building_data.update(zoning_restrictions)  # Merging dictionaries
 
     # Save data to JSON
 
     save_to_json(building_data, "building_data.json")
-    #print("JSON saved successfully:", building_data)
+    print("JSON saved successfully:", building_data)
 
-    # Visualization
+    # # Visualization
     plot_building_and_zoning(boundary_95_rotated, plot_map, lv95_coords, vertices_95, zoom_factor=2)
 
     return building_data
@@ -668,8 +668,12 @@ async def upload_ifc(file: UploadFile = File(...)):
     ifc_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(ifc_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
     result_from_ata = main(ifc_path)
-    # Load the existing SHP file
+    building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
+    building_data = get_Building_data(result_from_ata)
+    print("This is the final building data: ", building_data)
+    #Load the existing SHP file
     if os.path.exists(zoning_map_path):
         try:
             gdf = gpd.read_file(zoning_map_path)
@@ -678,10 +682,10 @@ async def upload_ifc(file: UploadFile = File(...)):
             return {"error": f"Failed to read SHP file: {str(e)}"}
     else:
         return {"error": "SHP file is missing on the server"}
-
-    # Process the IFC file
+    
     try:
          building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
+         print("This is the final building data: ", building_data)
     except Exception as e:
         return {"error": f"Failed to process IFC file: {str(e)}"}
 
@@ -787,7 +791,6 @@ async def upload_to_speckle_route(file: UploadFile = File(...)):
                     "commit_id": commit_id,
                     "stream_id": STREAM_ID,
                     "file_name": file.filename
-
                 }
             }
         finally:

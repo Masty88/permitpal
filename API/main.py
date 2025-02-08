@@ -663,7 +663,7 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     # Process the IFC file
     try:
-        building_data = get_Building_data(ifc_path, zoning_map_path)
+         building_data = get_Building_data(path, zoning_map_path, plot_map_path)
     except Exception as e:
         return {"error": f"Failed to process IFC file: {str(e)}"}
 

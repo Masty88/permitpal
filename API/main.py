@@ -14,10 +14,18 @@ import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Polygon
 from pyproj import Transformer
 from fastapi.middleware.cors import CORSMiddleware
+import os
+import importlib
+from speckle_transform import IFCToSpeckle
 
 
 # directory to save uploaded files
 UPLOAD_FOLDER = "uploads"
+# Step 1: Define project variables
+SPECKLE_SERVER = "https://app.speckle.systems/"
+SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df"  # Replace with your token
+STREAM_ID = "ac4a00b20e"  # Replace with your stream ID
+BRANCH_NAME = "main"  # Or whatever branch you want to use
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI()
@@ -417,14 +425,14 @@ def get_absolute_coordinates(placement):
 
     # Get Local Placement Coordinates
     location = placement.RelativePlacement.Location.Coordinates if hasattr(placement.RelativePlacement, "Location") else [0, 0, 0]
-    
+
     # Check if PlacementRelTo exists (meaning it's nested)
     parent_placement = getattr(placement, "PlacementRelTo", None)
-    
+
     if parent_placement:
         parent_coords = get_absolute_coordinates(parent_placement)
         return [location[i] + parent_coords[i] for i in range(3)]
-    
+
     return location  # If no parent, return local coordinates
 
 def extract_site_coordinates(model):
@@ -441,10 +449,10 @@ def get_lv95_coords(path):
     """
     model = ifcopenshell.open(path)
     print("test coords")
-    print(get_ifc_site_coordinates(model)) 
+    print(get_ifc_site_coordinates(model))
     world_coords = get_world_coordinates(model)
 
-  
+
 
     if world_coords:
         lat_dms, lon_dms = world_coords  # Unpack tuple of tuples
@@ -471,7 +479,7 @@ def get_Building_data(path, zoning_map_path):
 
     model = ifcopenshell.open(path)
     zoning_map = gpd.read_file(zoning_map_path)
-    
+
 
 
     lv95_coords = extract_site_coordinates(model)
@@ -601,3 +609,45 @@ async def upload_ifc(file: UploadFile = File(...)):
     return response_data
 
 
+@app.post("/upload-to-speckle/")
+async def upload_to_speckle_route(file: UploadFile = File(...)):
+    """Endpoint per caricare un file IFC su Speckle con conversione dettagliata"""
+    print(f"Received file for Speckle upload: {file.filename}")
+
+    try:
+        # Salva il file temporaneamente
+        ifc_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(ifc_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        try:
+            # Inizializza il convertitore
+            converter = IFCToSpeckle(
+                speckle_server_url=SPECKLE_SERVER,
+                stream_id=STREAM_ID,
+                token=SPECKLE_TOKEN
+            )
+
+            # Processa e invia a Speckle
+            obj_id, commit_id = converter.process_and_send(ifc_path)
+
+            return {
+                "message": "File successfully uploaded to Speckle with detailed conversion",
+                "data": {
+                    "object_id": obj_id,
+                    "commit_id": commit_id,
+                    "stream_id": STREAM_ID,
+                    "file_name": file.filename
+                }
+            }
+        finally:
+            # Pulisci il file temporaneo
+            if os.path.exists(ifc_path):
+                os.remove(ifc_path)
+                print(f"Temporary file removed: {ifc_path}")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Speckle upload failed: {str(e)}"
+        )

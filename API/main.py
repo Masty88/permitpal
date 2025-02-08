@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import importlib
 from speckle_transform import IFCToSpeckle
+from speckle_object import send_to_speckle
 
 
 # directory to save uploaded files
@@ -25,7 +26,9 @@ UPLOAD_FOLDER = "uploads"
 SPECKLE_SERVER = "https://app.speckle.systems/"
 SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df"  # Replace with your token
 STREAM_ID = "ac4a00b20e"  # Replace with your stream ID
+DATA_ID = "5308d7379d"  # Replace with your data ID
 BRANCH_NAME = "main"  # Or whatever branch you want to use
+BRANCH_DATA="emmanuelle"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = FastAPI()
@@ -524,9 +527,9 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
         "height": get_building_height_complex(model)[0],
         "floors": len(model.by_type("IfcBuildingStorey")),
         "floor_area": get_floor_area(model),
-        "Georeference": lv95_coords, 
+        "Georeference": lv95_coords,
         "Centroid": centroid_lv95
- 
+
     }
 
     # Store zoning information if available (only first matching zone)
@@ -567,9 +570,6 @@ def ensure_serializable(obj):
     elif hasattr(obj, "tolist"):  # Handle list-like objects
         return obj.tolist()
     return str(obj)  # Convert unknown objects to strings
-
-import ifcopenshell
-
 
 # IFC Test File
 path = r"tests/LeopoldPointBuilding_03.Light_IFC4_GL_Zurich_2056_.ifc"
@@ -630,8 +630,16 @@ async def upload_ifc(file: UploadFile = File(...)):
     # Create the response payload
     response_data = {
         "message": "IFC file uploaded and processed successfully",
+        "rhino": json.dumps(ensure_serializable(building_data), indent=4),
         "data": ensure_serializable(building_data)  # Convert to JSON-safe types
     }
+
+    # Send to Speckle
+    speckle_response = await send_to_speckle(response_data, SPECKLE_TOKEN, DATA_ID)
+    print("Speckle send complete:", speckle_response)
+
+    # Add Speckle info to response
+    response_data["speckle"] = speckle_response
 
     return response_data
 
@@ -665,7 +673,7 @@ async def upload_to_speckle_route(file: UploadFile = File(...)):
                     "commit_id": commit_id,
                     "stream_id": STREAM_ID,
                     "file_name": file.filename
-                    
+
                 }
             }
         finally:

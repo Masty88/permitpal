@@ -196,12 +196,14 @@ def check_zoning(building_polygon, zoning_map):
     within_zoning = zoning_map.contains(building_polygon)
     return zoning_map[within_zoning]
 
+
 def check_plot(building_polygon, plot_map):
     """
-    Check if a building is within any zoning area.
+    Check which plots intersect with a given building polygon.
     """
-    within_zoning = plot_map.contains(building_polygon)
-    return plot_map[within_zoning]
+
+    intersecting_plots = plot_map[plot_map.intersects(building_polygon)]
+    return intersecting_plots
 
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
@@ -511,9 +513,9 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
     zoning_with_building = check_zoning(building_polygon, zoning_map)
 
     # Check plot
-    building_Plot = check_zoning(building_polygon, plot_map)
-    print("This is the building plot")
-    print(building_Plot)
+    building_Plot = check_plot(building_polygon, plot_map)
+    print("Plot ID")
+    print(building_Plot.R1_EGRIS_E)
 
 
 
@@ -524,6 +526,7 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
         "floor_area": get_floor_area(model),
         "Georeference": lv95_coords, 
         "Centroid": centroid_lv95
+ 
     }
 
     # Store zoning information if available (only first matching zone)
@@ -533,7 +536,10 @@ def get_Building_data(path, zoning_map_path, plot_map_path):
             "OBJID": first_zone['OBJID'],
             "R1_CODE": first_zone['R1_CODE'],
             "R1_BEZEICH": first_zone['R1_BEZEICH'],
-            "R1_TYP_KAN": first_zone['R1_TYP_KAN']
+            "R1_TYP_KAN": first_zone['R1_TYP_KAN'],
+            "Plot ID": building_Plot.R1_EGRIS_E.values
+
+
         })
 
     # Extract zoning restrictions and add them to building_data
@@ -566,7 +572,8 @@ import ifcopenshell
 
 
 # IFC Test File
-path = r"tests/LeopoldPointBuilding_01.Full_IFC4_GL_Zurich_2056.ifc"
+path = r"tests/LeopoldPointBuilding_03.Light_IFC4_GL_Zurich_2056_.ifc"
+
 
 # SHP Zone File
 zoning_map_path = r"data\Zonenplan.shp"

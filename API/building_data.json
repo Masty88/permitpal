@@ -11,6 +11,13 @@
     "R1_CODE": "C110411",
     "R1_BEZEICH": "viergeschossige Wohnzone",
     "R1_TYP_KAN": "GN_Typ_Kanton[z58e3d68f4ee5000",
+    "Plot ID": [
+        "CH399970149101",
+        "CH286299917953",
+        "CH156299799163",
+        "CH119162997983",
+        "CH199979629138"
+    ],
     "Max Building Height": 12.5,
     "Total Allowed Height": -99.0,
     "Max Full Floors": 4,

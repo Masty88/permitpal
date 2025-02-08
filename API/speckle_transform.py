@@ -12,7 +12,6 @@ class IFCToSpeckle:
         self.client = SpeckleClient(host=speckle_server_url)
         self.client.authenticate_with_token(token)
 
-        # Se non viene fornito uno stream_id, ne crea uno nuovo
         if stream_id is None:
             new_stream = self.client.stream.create(
                 name="IFC Upload Stream",

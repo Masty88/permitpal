@@ -155,13 +155,14 @@ def get_floor_area(model):
     # Try getting area from IfcBuildingStorey
     for storey in model.by_type("IfcBuildingStorey"):
         for relDefinesByProperties in storey.IsDefinedBy:
+
             if relDefinesByProperties.is_a("IfcRelDefinesByProperties"):
                 propSet = relDefinesByProperties.RelatingPropertyDefinition
 
                 # If area is in IfcPropertySet
                 if propSet.is_a("IfcPropertySet"):
                     for prop in propSet.HasProperties:
-                        if prop.Name in ["GrossFloorArea", "NetFloorArea"]:  # Update based on debug output
+                        if prop.Name in ["Max Full Floors", "NetFloorArea"]:  # Update based on debug output
                             total_area += prop.NominalValue.wrappedValue
 
                 # If area is in IfcElementQuantity
@@ -194,6 +195,13 @@ def check_zoning(building_polygon, zoning_map):
     """
     within_zoning = zoning_map.contains(building_polygon)
     return zoning_map[within_zoning]
+
+def check_plot(building_polygon, plot_map):
+    """
+    Check if a building is within any zoning area.
+    """
+    within_zoning = plot_map.contains(building_polygon)
+    return plot_map[within_zoning]
 
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
@@ -472,13 +480,14 @@ def get_lv95_coords(path):
 
     return lv95_coords
 
-def get_Building_data(path, zoning_map_path):
+def get_Building_data(path, zoning_map_path, plot_map_path):
     """
     Function to extract building data and zoning information, including restrictions.
     """
 
     model = ifcopenshell.open(path)
     zoning_map = gpd.read_file(zoning_map_path)
+    plot_map = gpd.read_file(plot_map_path)
 
 
 
@@ -501,13 +510,20 @@ def get_Building_data(path, zoning_map_path):
     # Check zoning
     zoning_with_building = check_zoning(building_polygon, zoning_map)
 
+    # Check plot
+    building_Plot = check_zoning(building_polygon, plot_map)
+    print("This is the building plot")
+    print(building_Plot)
+
 
 
     # Initialize building data dictionary
     building_data = {
         "height": get_building_height_complex(model)[0],
         "floors": len(model.by_type("IfcBuildingStorey")),
-        "floor_area": get_floor_area(model)
+        "floor_area": get_floor_area(model),
+        "Georeference": lv95_coords, 
+        "Centroid": centroid_lv95
     }
 
     # Store zoning information if available (only first matching zone)
@@ -530,7 +546,7 @@ def get_Building_data(path, zoning_map_path):
     print("JSON saved successfully:", building_data)
 
     # Visualization
-    plot_building_and_zoning(boundary_polygon_lv95, zoning_map, lv95_coords, vertices_95, zoom_factor=2)
+    plot_building_and_zoning(boundary_polygon_lv95, plot_map, lv95_coords, vertices_95, zoom_factor=2)
 
     return building_data
 
@@ -550,17 +566,21 @@ import ifcopenshell
 
 
 # IFC Test File
-path = r"API/tests/LeopoldPointBuilding_01.Full_IFC4_GL_Zurich_2056.ifc"
+path = r"tests/LeopoldPointBuilding_01.Full_IFC4_GL_Zurich_2056.ifc"
 
-# SHP Test File
-zoning_map_path = r"API\data\Zonenplan.shp"
+# SHP Zone File
+zoning_map_path = r"data\Zonenplan.shp"
+
+# SHP Plot File
+plot_map_path = r"data\Plot.shp"
 
 
 # actual test
 if __name__ == "__main__":
     if os.path.exists(path):
         if os.path.exists(zoning_map_path):
-            get_Building_data(path, zoning_map_path)
+            if os.path.exists(plot_map_path):
+                get_Building_data(path, zoning_map_path, plot_map_path)
 
         else:
             print("SHP file missing")
@@ -638,6 +658,7 @@ async def upload_to_speckle_route(file: UploadFile = File(...)):
                     "commit_id": commit_id,
                     "stream_id": STREAM_ID,
                     "file_name": file.filename
+                    
                 }
             }
         finally:

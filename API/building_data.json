@@ -1,5 +1,19 @@
 {
-    "height": 3.0,
-    "floors": 2,
-    "floor_area": "Unknown area"
+    "height": 1950.0000000000655,
+    "floors": 9,
+    "floor_area": "Unknown area",
+    "Georeference": "(2686343.037263768, 1250754.3092457172)",
+    "Centroid": [
+        2686354.8293442717,
+        1250767.4532629175
+    ],
+    "OBJID": "z5542320535d901d1",
+    "R1_CODE": "C110411",
+    "R1_BEZEICH": "viergeschossige Wohnzone",
+    "R1_TYP_KAN": "GN_Typ_Kanton[z58e3d68f4ee5000",
+    "Max Building Height": 12.5,
+    "Total Allowed Height": -99.0,
+    "Max Full Floors": 4,
+    "Allowed Attic Floors": 1.0,
+    "Floor Area Ratio (FAR)": -99
 }

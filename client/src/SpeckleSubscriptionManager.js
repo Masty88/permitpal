@@ -162,4 +162,11 @@ export class SpeckleSubscriptionManager {
             this.subscription = null;
         }
     }
+
+    unsubscribeAll() {
+        this.stopSubscription();
+        if (this.currentObjectUrl) {
+            this.viewer.unloadObject(this.currentObjectUrl);
+        }
+    }
 }

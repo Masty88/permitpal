@@ -3,302 +3,399 @@
 ---
 
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css" />
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css"
+    />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"
+    ></script>
     <title>IFC Upload and Analysis</title>
-</head>
-<body>
-    <div class="container">
-        <h1>IFC Upload and Analysis</h1>
-        <form id="uploadForm" class="upload-form">
+  </head>
+  <body>
+    <div class="parent-container">
+      <div class="content-section">
+        <div class="container">
+          <h1>OpenPermit</h1>
+          <form id="uploadForm" class="upload-form">
             <div class="form-group">
-                <label for="ifcFile">IFC File:</label>
-                <input
-                    type="file"
-                    id="ifcFile"
-                    accept=".ifc"
-                    class="file-input"
-                    required
-                />
+              <label for="ifcFile">IFC File:</label>
+              <input
+                type="file"
+                id="ifcFile"
+                accept=".ifc"
+                class="file-input"
+                required
+              />
             </div>
 
             <div class="button-group">
-                <button type="button" id="processButton" class="process-button">
-                    Process IFC File
-                </button>
+              <button type="button" id="processButton" class="process-button">
+                Process IFC File
+              </button>
             </div>
-        </form>
-        <div id="status" class="status"></div>
-        <div id="results" class="results"></div>
-        <div id="viewer" class="viewer-container"></div>
+          </form>
+          <div id="status" class="status"></div>
+          <div id="results" class="results"></div>
+        </div>
+      </div>
     </div>
-</body>
+    <div
+      id="renderer"
+      style="width:100%;height:100%;left:0px;top:0px;position:absolute"
+    >
+    </div>
+  </body>
 </html>
 
 <style>
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
+  html,
+  body {
+    font-family: var(--sl-font-sans);
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
 
-    .upload-form {
-        margin: 2rem 0;
-    }
+  .parent-container {
+    display: flex;
+    position: absolute;
+    z-index: 1;
+    margin: 1rem;
+    border-radius: var(--sl-border-radius-medium);
+  }
 
-    .form-group {
-        margin-bottom: 1rem;
-    }
+  .content-section {
+    width: max-content;
+    overflow-y: auto;
+    padding: 2rem;
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+  }
 
-    .file-input {
-        display: block;
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-top: 0.5rem;
-    }
+  .upload-card {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+  }
 
-    .process-button {
-        padding: 1rem 1.5rem;
-        background-color: #2196F3;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s;
-        width: 100%;
-    }
+  .file-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+  }
 
-    .process-button:hover {
-        background-color: #1976D2;
-    }
+  .file-input-wrapper {
+    background-color: white;
+    border: 2px dashed #e0e0e0;
+    border-radius: 6px;
+    padding: 1rem;
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
 
-    .process-button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
+  .file-input-wrapper:hover {
+    border-color: #2196f3;
+    background-color: #f8f9fa;
+  }
 
-    .status {
-        margin: 1rem 0;
-        padding: 1rem;
-        border-radius: 4px;
-    }
+  .file-input {
+    width: 100%;
+    font-size: 0.9rem;
+    color: #555;
+  }
 
-    .status.error {
-        background-color: #ffebee;
-        color: #c62828;
-    }
+  .process-button {
+    padding: 1rem 1.5rem;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
-    .status.success {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-    }
+  .process-button:hover {
+    background-color: #1976d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 
-    .status.processing {
-        background-color: #e3f2fd;
-        color: #1565c0;
-    }
+  .process-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
-    .results {
-        margin-top: 2rem;
-        padding: 1rem;
-        background-color: #f5f5f5;
-        border-radius: 4px;
-        white-space: pre-wrap;
-    }
+  .process-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
+  .button-group {
+    margin-top: 1.5rem;
+  }
 
-    .viewer-container {
-        width: 100%;
-        height: 600px;
-        background: #f5f5f5;
-        margin-top: 2rem;
-        border-radius: 4px;
-        position: relative;
-    }
+  .status.error {
+    background-color: #ffebee;
+    color: var(--sl-color-danger-500);
+    border-left: 4px solid var(--sl-color-danger-500);
+  }
 
-    #renderer {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
+  .status.success {
+    background-color: #e8f5e9;
+    color: var(--sl--color-success-500);
+    border-left: 4px solid var(--sl-color-success-500);
+  }
 
+  .status.processing {
+    background-color: var(--sl-color-neutral);
+    color: var(--sl-color-primary-500);
+    border-left: 4px solid var(--sl-color-primary-500);
+  }
+
+  .status {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: none; /* Nascosto di default */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .status.visible {
+    display: block;
+    opacity: 1;
+  }
+
+  .results {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    white-space: pre-wrap;
+    display: none; /* Nascosto di default */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .results.visible {
+    display: block;
+    opacity: 1;
+  }
+
+  h1 {
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+
+  #renderer {
+    width: 100%;
+    height: 100%;
+  }
 </style>
-
-
 <script>
-    import {
-        Viewer,
-        DefaultViewerParams,
-        SpeckleLoader,
-        UrlHelper
-    } from "@speckle/viewer";
-    import { CameraController, SelectionExtension } from "@speckle/viewer";
-    import { SpeckleSubscriptionManager } from '../SpeckleSubscriptionManager.js';
+  import {
+    Viewer,
+    DefaultViewerParams,
+    SpeckleLoader,
+    UrlHelper,
+  } from "@speckle/viewer";
+  import { Vector3 } from "three";
+  import { CameraController, SelectionExtension } from "@speckle/viewer";
+  import { SpeckleSubscriptionManager } from "../SpeckleSubscriptionManager.js";
 
+  const SPECKLE_SERVER = "https://app.speckle.systems";
+  const SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df";
+  const PYTHON_API = "http://127.0.0.1:8000";
+  let viewer = null as any;
+  let subscriptionManager: SpeckleSubscriptionManager | null = null;
 
-    const SPECKLE_SERVER = "https://app.speckle.systems";
-    const SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df"
-    const PYTHON_API = "http://127.0.0.1:8000";
-    let viewer = null as any;
-    let subscriptionManager = null;
-
-async function initViewer() {
-    const container = document.getElementById("viewer") as HTMLDivElement;
-    const rendererDiv = document.createElement('div') as HTMLDivElement;
-    rendererDiv.id = 'renderer';
-    container.appendChild(rendererDiv);
-
+  async function initViewer(streamId: string, objectId: string) {
+    const container = document.getElementById("renderer") as HTMLElement;
     const params = DefaultViewerParams;
-    params.showStats = true;
+    params.showStats = false;
     params.verbose = true;
 
-    viewer = new Viewer(rendererDiv, params);
+    if (viewer) {
+      viewer.dispose();
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      viewer = null;
+    }
+
+    viewer = new Viewer(container, params);
     await viewer.init();
 
-    viewer.createExtension(CameraController);
+    const cameraController = viewer.createExtension(CameraController);
     viewer.createExtension(SelectionExtension);
-    subscriptionManager = new SpeckleSubscriptionManager(
-            SPECKLE_SERVER,
-            SPECKLE_TOKEN,
-            viewer
-        );
-}
-
-
-async function setupAutoSync(streamId) {
-    // Start subscription
-    subscriptionManager.startSubscription(streamId);
-}
-
-async function loadSpeckleModel(streamId: any, objectId: any) {
-    if (!viewer) {
-        await initViewer();
+    /** Create a loader for the speckle stream */
+    const urls = await UrlHelper.getResourceUrls(
+      `${SPECKLE_SERVER}/streams/${streamId}/objects/${objectId}`
+    );
+    for (const url of urls) {
+      const loader = new SpeckleLoader(viewer.getWorldTree(), url, "");
+      /** Load the speckle data */
+      await viewer.loadObject(loader, true);
     }
 
-    const urls = await UrlHelper.getResourceUrls(
-        `${SPECKLE_SERVER}/streams/${streamId}/objects/${objectId}`
+    cameraController.setCameraView(
+      {},
+      false // transizione animata = false (se vuoi animare metti true)
     );
 
-    for (const url of urls) {
-        const loader = new SpeckleLoader(viewer.getWorldTree(), url, "");
-        await viewer.loadObject(loader, true);
-    }
-}
-    const processButton = document.getElementById('processButton');
-
-    async function uploadToPython(file: string | Blob) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`${PYTHON_API}/upload`, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error('Python API processing failed');
-        }
-
-        return await response.json();
+    if (subscriptionManager) {
+      subscriptionManager.unsubscribeAll();
     }
 
-    async function uploadToSpeckle(file: string | Blob) {
-        const formData = new FormData();
-        formData.append('file', file);
+    subscriptionManager = new SpeckleSubscriptionManager(
+      SPECKLE_SERVER,
+      SPECKLE_TOKEN,
+      viewer
+    );
+  }
 
-        const response = await fetch(`${PYTHON_API}/upload-to-speckle`, {
-            method: 'POST',
-            body: formData
-        });
+  async function setupAutoSync(streamId: string) {
+    // Start subscription
+    subscriptionManager.startSubscription(streamId);
+  }
 
-        if (!response.ok) {
-            throw new Error('Speckle upload failed');
-        }
+  async function loadSpeckleModel(streamId: any, objectId: any) {
+    await initViewer(streamId, objectId);
+  }
+  const processButton = document.getElementById("processButton");
 
-        return await response.json();
+  async function uploadToPython(file: string | Blob) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${PYTHON_API}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Python API processing failed");
     }
 
-    function updateStatus(message: string | null, type: string) {
-        const statusDiv = document.getElementById('status');
-        statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
+    return await response.json();
+  }
+
+  async function uploadToSpeckle(file: string | Blob) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${PYTHON_API}/upload-to-speckle`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Speckle upload failed");
     }
 
-    function setFormEnabled(enabled: boolean) {
-        const form = document.getElementById('uploadForm');
-        const inputs = form.querySelectorAll('input, button');
-        inputs.forEach(input => input.disabled = !enabled);
+    return await response.json();
+  }
+
+  function setFormEnabled(enabled: boolean) {
+    const form = document.getElementById("uploadForm");
+    const inputs = form.querySelectorAll("input, button");
+    inputs.forEach((input) => (input.disabled = !enabled));
+  }
+
+  function updateStatus(message: string | null, type: string) {
+    const statusDiv = document.getElementById("status");
+    if (!message) {
+      statusDiv.classList.remove("visible");
+      return;
     }
 
-    function displayResults(data: { pythonAnalysis: any; speckleUpload: any; }) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = `
-            <h2>Results</h2>
-            <pre>${JSON.stringify(data, null, 2)}</pre>
-        `;
+    statusDiv.textContent = message;
+    statusDiv.className = `status ${type} visible`;
+  }
+
+  function displayResults(data: { pythonAnalysis: any; speckleUpload: any }) {
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = `
+      <h2>Results</h2>
+      <pre>${JSON.stringify(data, null, 2)}</pre>
+    `;
+    resultsDiv.classList.add("visible");
+  }
+
+  async function handleUnifiedProcess() {
+    const fileInput = document.getElementById("ifcFile");
+    const file = fileInput.files[0];
+
+    // Rimuovo la visibilità dei risultati da una precedente esecuzione
+    document.getElementById("results").classList.remove("visible");
+
+    if (!file) {
+      updateStatus("Please select an IFC file", "error");
+      return;
     }
 
-    async function handleUnifiedProcess() {
-        const fileInput = document.getElementById('ifcFile');
-        const file = fileInput.files[0];
+    try {
+      setFormEnabled(false);
+      updateStatus("Uploading and analyzing IFC file...", "processing");
 
-        if (!file) {
-            updateStatus('Please select an IFC file', 'error');
-            return;
-        }
+      // Avvio in parallelo le due chiamate API
+      const [pythonResult, speckleResult] = await Promise.all([
+        uploadToPython(file),
+        uploadToSpeckle(file),
+      ]);
 
-        try {
-            setFormEnabled(false);
+      // Mostro subito i risultati dell'analisi
+      const combinedResults = {
+        pythonAnalysis: pythonResult,
+        speckleUpload: speckleResult,
+      };
+      displayResults(combinedResults);
 
-            updateStatus('Analyzing IFC file...', 'processing');
-            const pythonResult = await uploadToPython(file);
+      // Aggiorno lo status per informare l'utente che l'analisi è completa
+      updateStatus("Processing complete! Results are available.", "success");
 
-            updateStatus('Uploading to Speckle...', 'processing');
-            const speckleResult = await uploadToSpeckle(file);
-
-            const combinedResults = {
-                pythonAnalysis: pythonResult,
-                speckleUpload: speckleResult
-            };
-
-            displayResults(combinedResults);
-            updateStatus('Processing complete! Loading viewer...', 'success');
-
-            // Carica il modello nel viewer usando i dati dalla risposta di Speckle
-            if (speckleResult?.data?.stream_id && speckleResult?.data?.object_id) {
-                await loadSpeckleModel(
-                    speckleResult.data.stream_id,
-                    speckleResult.data.object_id
-                );
-                setupAutoSync(speckleResult.data.stream_id);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            updateStatus(`Error: ${error.message}`, 'error');
-        } finally {
-            setFormEnabled(true);
-        }
+      // Carico il viewer in background, senza bloccare la visualizzazione dei risultati
+      if (speckleResult?.data?.stream_id && speckleResult?.data?.object_id) {
+        loadSpeckleModel(
+          speckleResult.data.stream_id,
+          speckleResult.data.object_id
+        )
+          .then(() => {
+            setupAutoSync(speckleResult.data.stream_id);
+          })
+          .catch((err) => {
+            console.error("Viewer load error:", err);
+          });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      updateStatus(`Error: ${error.message}`, "error");
+    } finally {
+      setFormEnabled(true);
     }
+  }
 
-    await loadSpeckleModel(
-                    "ac4a00b20e",
-                    "0a2eb53ccf027b1cbf4243e1b5f5c09a"
-                );
-    setupAutoSync("ac4a00b20e");
+  await initViewer("ac4a00b20e", "0a2eb53ccf027b1cbf4243e1b5f5c09a");
 
-    // Add event listener to the process button
-    processButton?.addEventListener('click', handleUnifiedProcess);
+  // Add event listener to the process button
+  processButton?.addEventListener("click", handleUnifiedProcess);
 </script>

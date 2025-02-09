@@ -576,10 +576,19 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
 
     floor_area_ratio = building_data["ground_floor_area"]/building_data["Plot Area"]
     building_to_land_area = building_data["total_floor_area"]/building_data["Plot Area"]
+
+    #to be checked or updated:
+    fassadelaenge = "nAn"
+    Grundgrenzbastand = 5
+    UnderGround = 1
+    basementMax = 0
+    anDGmax = 1
+
     #Store zoning information if available (only first matching zone)
     #if not zoning_with_building.empty:
     #   print("testing rotation issues")
     first_zone = zoning_with_building  # Take the first matching zoning entry
+    fassade_length_list = [result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_1"],result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_2"],result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_3"],result_from_ata["LeopoldPointBuilding_01.Full_2x3_facade_lengths"]["facade_length_4"]]
     building_data.update({
             "OBJID": first_zone['OBJID'],
             "R1_CODE": first_zone['R1_CODE'],
@@ -591,19 +600,23 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "getFloorAreaRatio": floor_area_ratio,
             "getBuildingToLandArea": building_to_land_area,
             "Ausnuetzungsziffer Max": first_zone['AUSNUETZU1'],
-            "Maximum building length": "nAn",
-            "Anrechenbares Untergeschoss max.": 0,
-            "anrechenbares Dachgeschoss max.": 1,
-            "Grundgrenzabstand": 5,
+            "Maximum building length": fassadelaenge,
+            "Anrechenbares Untergeschoss max.": basementMax,
+            "anrechenbares Dachgeschoss max.": anDGmax,
+            "Grundgrenzabstand": Grundgrenzbastand,
+            "Fassadelänge max": fassadelaenge,
 
             #Here come the checks
             "heighest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
             "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
             "heights check" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
             "floor_number_check" : floor_number_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
-            "fassade length check" : True,
-            "plot distance check" : False,
-            
+            "fassade length check" : fassade_length_check(fassade_length_list, fassadelaenge),
+            "plot distance check" : grenzabstand_check(building_Plot, boundary_polygon, Grundgrenzbastand),
+            #"basement check" : untergeschoss_check( ,basementMax),
+            #"building lenght check": building_length_check(),
+            #"floor area check": floor_area_Ratio_check()
+
 
 
 
@@ -655,10 +668,13 @@ def floor_number_check(floor_number, floor_number_max):
         return True
 
 
-def fassade_length_check(fassade_length,fassade_length_max):
-    if float(fassade_length) > float(fassade_length_max):
-        return False
+def fassade_length_check(fassade_length_list,fassade_length_max):
+    if fassade_length_max == "nAn":
+        return True
     else:
+        for fassade in fassade_length_list:
+            if float(fassade) > float(fassade_length_max):
+                return False
         return True
 
 
@@ -689,7 +705,7 @@ def building_length_check(building_length, building_length_max):
     else:
         return True
 
-def floor_area_Ratio(floor_area, floor_area_max):
+def floor_area_Ratio_check(floor_area, floor_area_max):
     if floor_area != float(-99):
         if float(floor_area) > float(floor_area_max):
             return False
@@ -714,8 +730,7 @@ if __name__ == "__main__":
     if os.path.exists(path):
         if os.path.exists(zoning_map_path):
             if os.path.exists(plot_map_path):
-                result_from_ata = main(path)
-                get_Building_data(path, zoning_map_path,result_from_ata,plot_map_path)
+                get_Building_data(path, zoning_map_path, plot_map_path)
 
         else:
             print("SHP file missing")

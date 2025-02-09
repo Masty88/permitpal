@@ -734,14 +734,10 @@ def building_length_check(building_length, building_length_max):
         return True
 
 def floor_area_Ratio_check(floor_area, floor_area_max):
-    if floor_area != -99:
         if float(floor_area) > float(floor_area_max):
             return False
         else:
             return True
-    else:
-        return True
-
 
 # IFC Test File
 path = r"tests/LeopoldPointBuilding_03.Light_IFC4_GL_Zurich_2056_.ifc"

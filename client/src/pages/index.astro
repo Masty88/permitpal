@@ -71,7 +71,7 @@
     position: absolute;
     z-index: 1;
     margin: 1rem;
-    width: 40%;
+    width: min-content;
     border-radius: var(--sl-border-radius-medium);
   }
 
@@ -192,12 +192,13 @@
   .results {
     margin-top: 1rem;
     padding: 1.5rem;
-    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    display: none; /* Nascosto di default */
+    display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
+    height: auto;
+    overflow: auto;
   }
 
   .results.visible {

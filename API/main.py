@@ -10,6 +10,7 @@ import ifcopenshell.geom
 import json
 import os
 import geopandas as gpd
+import pandas as pd
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Polygon
 from pyproj import Transformer
@@ -661,9 +662,16 @@ def fassade_length_check(fassade_length,fassade_length_max):
         return True
 
 
-def grenzabstand_check(polygon_plot,polygon_building, grenzabstand):
+def grenzabstand_check(polygon_plot, polygon_building, grenzabstand):
     grenzabstand_polygon = polygon_plot.buffer(-float(grenzabstand))
-    return not grenzabstand_polygon.intersects(polygon_building)
+    intersects = grenzabstand_polygon.intersects(polygon_building)
+    if isinstance(intersects, bool):
+        return not intersects
+    elif isinstance(intersects, pd.Series):
+        print(intersects)
+        return not intersects.any()
+    else:
+        return True
 
 
 def untergeschoss_check(untergeschoss_number,untergeschoss_max):

@@ -273,7 +273,6 @@
     SpeckleLoader,
     UrlHelper,
   } from "@speckle/viewer";
-  import { Vector3 } from "three";
   import { CameraController, SelectionExtension } from "@speckle/viewer";
   import { SpeckleSubscriptionManager } from "../SpeckleSubscriptionManager.js";
 
@@ -426,10 +425,11 @@
       updateStatus("Uploading and analyzing IFC file...", "processing");
 
       const pythonResult = await uploadToPython(file);
+      console.log("Python result:", pythonResult);
       form.style.display = "none";
 
       displayResults({
-        pythonAnalysis: pythonResult.data,
+        pythonAnalysis: pythonResult.checks,
         speckleUpload: "Mesh upload not started yet...",
       });
       updateStatus(

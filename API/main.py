@@ -596,12 +596,13 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "Grundgrenzabstand": 5,
 
             #Here come the checks
-            "check heights" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
-            "check floor_number_check" : floor_number_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
-            "check fassadelength" : True,
-            "check plot distances" : False
             "heighest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
             "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
+            "heights check" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
+            "floor_number_check" : floor_number_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
+            "fassade length check" : True,
+            "plot distance check" : False,
+            
 
 
 
@@ -617,7 +618,7 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     print("JSON saved successfully:", building_data)
 
     # # Visualization
-    plot_building_and_zoning(boundary_95_rotated, plot_map, lv95_coords, vertices_95, zoom_factor=2)
+    #plot_building_and_zoning(boundary_95_rotated, plot_map, lv95_coords, vertices_95, zoom_factor=2)
 
     return building_data
 
@@ -633,9 +634,65 @@ def ensure_serializable(obj):
         return obj.tolist()
     return str(obj)  # Convert unknown objects to strings
 
+#Check functions
+
+"""
+Comparisons functions
+
+"""
+def heights_check(height, max_height):
+    if float(height) > float(max_height):
+        return False
+    else:
+        return True
+
+
+def floor_number_check(floor_number, floor_number_max):
+    if float(floor_number) > float(floor_number_max):
+        return False
+    else:
+        return True
+
+
+def fassade_length_check(fassade_length,fassade_length_max):
+    if float(fassade_length) > float(fassade_length_max):
+        return False
+    else:
+        return True
+
+
+def grenzabstand_check(polygon_plot,polygon_building, grenzabstand):
+    grenzabstand_polygon = polygon_plot.buffer(-float(grenzabstand))
+    return not grenzabstand_polygon.intersects(polygon_building)
+
+
+def untergeschoss_check(untergeschoss_number,untergeschoss_max):
+    if float(untergeschoss_number) > float(untergeschoss_max):
+        return False
+    else:
+        return True
+
+def building_length_check(building_length, building_length_max):
+    if building_length != "nAn":
+        if float(building_length) > float(building_length_max):
+            return False
+        else:
+            return True
+    else:
+        return True
+
+def floor_area_Ratio(floor_area, floor_area_max):
+    if floor_area != float(-99):
+        if float(floor_area) > float(floor_area_max):
+            return False
+        else:
+            return True
+    else:
+        return True
+
+
 # IFC Test File
 path = r"tests/LeopoldPointBuilding_03.Light_IFC4_GL_Zurich_2056_.ifc"
-
 
 # SHP Zone File
 zoning_map_path = r"data\Zonenplan.shp"
@@ -709,59 +766,6 @@ async def upload_ifc(file: UploadFile = File(...)):
 
     return response_data
 
-"""
-Comparisons functions
-
-"""
-def heights_check(height, max_height):
-    if float(height) > float(max_height):
-        return False
-    else:
-        return True
-
-
-def floor_number_check(floor_number, floor_number_max):
-    if float(floor_number) > float(floor_number_max):
-        return False
-    else:
-        return True
-
-
-def fassade_length_check(fassade_length,fassade_length_max):
-    if float(fassade_length) > float(fassade_length_max):
-        return False
-    else:
-        return True
-
-
-def grenzabstand_check(polygon_plot,polygon_building, grenzabstand):
-    grenzabstand_polygon = polygon_plot.buffer(-float(grenzabstand))
-    return not grenzabstand_polygon.intersects(polygon_building)
-
-
-def untergeschoss_check(untergeschoss_number,untergeschoss_max):
-    if float(untergeschoss_number) > float(untergeschoss_max):
-        return False
-    else:
-        return True
-
-def building_length_check(building_length, building_length_max):
-    if building_length != "nAn":
-        if float(building_length) > float(building_length_max):
-            return False
-        else:
-            return True
-    else:
-        return True
-
-def floor_area_Ratio(floor_area, floor_area_max):
-    if floor_area != float(-99):
-        if float(floor_area) > float(floor_area_max):
-            return False
-        else:
-            return True
-    else:
-        return True
 
 
 

@@ -22,6 +22,7 @@ from speckle_object import send_to_speckle
 import math
 import shapely
 from process_geometry.run_all import main
+from call_llm import extract_data_from_text
 
 # directory to save uploaded files
 UPLOAD_FOLDER = "uploads"
@@ -783,6 +784,22 @@ async def upload_ifc(file: UploadFile = File(...)):
     building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)[0]
     building_checks = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)[1]
     print("This is the final building data: ", building_data)
+    our_result_data = {
+        "heighest": 22.994157028775764,
+        "lowest": -4.4,
+        "number_of_floors": 7,
+        "total_floor_area": 2053.1270080472705,
+        "ground_floor_area": 233.84898800000002,
+        "facade_length_1": 21.908858409427527,
+        "facade_length_2": 19.63500000000002,
+        "facade_length_3": 21.908858409427527,
+        "facade_length_4": 19.63500000000002,
+        "number_of_underground_level": 1,
+        "Total floor to area ratio": 2,
+        "Ground floor to area ratio": 0.5,
+    }
+
+    llm_result = extract_data_from_text(our_result_data)
     #Load the existing SHP file
     if os.path.exists(zoning_map_path):
         try:
@@ -806,6 +823,9 @@ async def upload_ifc(file: UploadFile = File(...)):
         "data": ensure_serializable(building_data),
         "checks": ensure_serializable(building_checks),
             # Convert to JSON-safe types
+        "data": ensure_serializable(building_data),  # Convert to JSON-safe types
+        "passed": llm_result['passed'],
+        "failed": llm_result['failed'],
     }
 
     # Send to Speckle
@@ -815,8 +835,6 @@ async def upload_ifc(file: UploadFile = File(...)):
     response_data["speckle"] = speckle_response
 
     return response_data
-
-
 
 
 

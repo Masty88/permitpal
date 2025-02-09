@@ -582,6 +582,8 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     UnderGround = 1
     basementMax = 0
     anDGmax = 1
+    floor_Area_ratio_Max = "nAn"
+    Groundfloor_Area_ratio_Max = "nAn"
 
     #Store zoning information if available (only first matching zone)
     #if not zoning_with_building.empty:
@@ -606,19 +608,14 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "Fassadelänge max": fassadelaenge,
 
             #Here come the checks
-            "heighest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
-            "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
+
             "heights check" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
             "floor_number_check" : floor_number_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
             "fassade length check" : fassade_length_check(fassade_length_list, fassadelaenge),
             "plot distance check" : grenzabstand_check(building_Plot, boundary_polygon, Grundgrenzbastand),
-            #"basement check" : untergeschoss_check( ,basementMax),
-            #"building lenght check": building_length_check(),
-            #"floor area check": floor_area_Ratio_check()
-            
-
-
-
+            "basement check" : untergeschoss_check( UnderGround,basementMax),
+            "Total floor area ratio check": floor_area_Ratio_check(building_to_land_area,floor_Area_ratio_Max),
+            "Ground Floor area ratio check": floor_area_Ratio_check(building_to_land_area, Groundfloor_Area_ratio_Max)
         })
 
     # # Extract zoning restrictions and add them to building_data

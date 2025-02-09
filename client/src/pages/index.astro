@@ -20,7 +20,7 @@
     <div class="parent-container">
       <div class="content-section">
         <div class="container">
-          <h1>OpenPermit</h1>
+          <h3>OpenPermit</h3>
           <form id="uploadForm" class="upload-form">
             <div class="form-group">
               <label for="ifcFile">IFC File:</label>
@@ -48,6 +48,10 @@
       id="renderer"
       style="width:100%;height:100%;left:0px;top:0px;position:absolute"
     >
+      <div class="loading">
+        <h1>Building your ifc</h1>
+        <div class="loader"></div>
+      </div>
     </div>
   </body>
 </html>
@@ -67,6 +71,7 @@
     position: absolute;
     z-index: 1;
     margin: 1rem;
+    width: 40%;
     border-radius: var(--sl-border-radius-medium);
   }
 
@@ -185,12 +190,11 @@
   }
 
   .results {
-    margin-top: 2rem;
+    margin-top: 1rem;
     padding: 1.5rem;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    white-space: pre-wrap;
     display: none; /* Nascosto di default */
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -210,7 +214,37 @@
     width: 100%;
     height: 100%;
   }
+
+  .loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--sl-color-text-primary);
+    background: #fff;
+  }
+
+  .loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-top: 10px;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 </style>
+
 <script>
   import {
     Viewer,
@@ -225,6 +259,8 @@
   const SPECKLE_SERVER = "https://app.speckle.systems";
   const SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df";
   const PYTHON_API = "http://127.0.0.1:8000";
+  const loadingScreen = document.querySelector(".loading");
+  const form = document.getElementById("uploadForm")
   let viewer = null as any;
   let subscriptionManager: SpeckleSubscriptionManager | null = null;
 
@@ -256,11 +292,6 @@
       /** Load the speckle data */
       await viewer.loadObject(loader, true);
     }
-
-    cameraController.setCameraView(
-      {},
-      false // transizione animata = false (se vuoi animare metti true)
-    );
 
     if (subscriptionManager) {
       subscriptionManager.unsubscribeAll();
@@ -299,9 +330,25 @@
     return await response.json();
   }
 
-  async function uploadToSpeckle(file: string | Blob) {
+  async function uploadToSpeckle(fileOrPath: string | Blob) {
     const formData = new FormData();
-    formData.append("file", file);
+    let fileBlob: Blob;
+
+    if (typeof fileOrPath === "string") {
+      // Recupera il file dal percorso pubblico (es: "/light.ifc")
+      const response = await fetch(fileOrPath);
+      if (!response.ok) {
+        throw new Error(`Could not fetch file from ${fileOrPath}`);
+      }
+      fileBlob = await response.blob();
+    } else {
+      fileBlob = fileOrPath;
+    }
+
+    const fileObj = new File([fileBlob], "light.ifc", {
+      type: "application/octet-stream",
+    });
+    formData.append("file", fileObj);
 
     const response = await fetch(`${PYTHON_API}/upload-to-speckle`, {
       method: "POST",
@@ -345,7 +392,7 @@
     const fileInput = document.getElementById("ifcFile");
     const file = fileInput.files[0];
 
-    // Rimuovo la visibilità dei risultati da una precedente esecuzione
+    // Rimuovo eventuali risultati precedenti
     document.getElementById("results").classList.remove("visible");
 
     if (!file) {
@@ -357,24 +404,29 @@
       setFormEnabled(false);
       updateStatus("Uploading and analyzing IFC file...", "processing");
 
-      // Avvio in parallelo le due chiamate API
-      const [pythonResult, speckleResult] = await Promise.all([
-        uploadToPython(file),
-        uploadToSpeckle(file),
-      ]);
+      const pythonResult = await uploadToPython(file);
+      form.style.display = "none";
 
-      // Mostro subito i risultati dell'analisi
-      const combinedResults = {
-        pythonAnalysis: pythonResult,
+      displayResults({
+        pythonAnalysis: pythonResult.data,
+        speckleUpload: "Mesh upload not started yet...",
+      });
+      updateStatus(
+        "Python analysis complete! Launching mesh upload...",
+        "success"
+      );
+
+      loadingScreen.style.display = "flex";
+
+      const speckleResult = await uploadToSpeckle("/light.ifc");
+
+      displayResults({
+        pythonAnalysis: pythonResult.data,
         speckleUpload: speckleResult,
-      };
-      displayResults(combinedResults);
+      });
 
-      // Aggiorno lo status per informare l'utente che l'analisi è completa
-      updateStatus("Processing complete! Results are available.", "success");
-
-      // Carico il viewer in background, senza bloccare la visualizzazione dei risultati
       if (speckleResult?.data?.stream_id && speckleResult?.data?.object_id) {
+        loadingScreen.style.display = "none";
         loadSpeckleModel(
           speckleResult.data.stream_id,
           speckleResult.data.object_id
@@ -394,7 +446,7 @@
     }
   }
 
-  await initViewer("ac4a00b20e", "0a2eb53ccf027b1cbf4243e1b5f5c09a");
+  //await initViewer("ac4a00b20e", "0a2eb53ccf027b1cbf4243e1b5f5c09a");
 
   // Add event listener to the process button
   processButton?.addEventListener("click", handleUnifiedProcess);

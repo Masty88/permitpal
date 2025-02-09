@@ -1,0 +1,21 @@
+{
+    "LeopoldPointBuilding_04.UltraLight_IFC4_GL_Zurich_2056_external_walls": [],
+    "LeopoldPointBuilding_04.UltraLight_IFC4_GL_Zurich_2056_facade_lengths": {
+        "facade_length_1": 21.90885840942753,
+        "facade_length_2": 19.63500000000003,
+        "facade_length_3": 21.90885840942753,
+        "facade_length_4": 19.63500000000003
+    },
+    "LeopoldPointBuilding_04.UltraLight_IFC4_GL_Zurich_2056_total_area_net_summary": {
+        "net_area": {},
+        "number_of_floors": 0
+    },
+    "LeopoldPointBuilding_04.UltraLight_IFC4_GL_Zurich_2056_xyz_extremes": {
+        "lowest_x": -0.14885840942750672,
+        "highest_x": 21.760000000000023,
+        "lowest_y": -3.4650000000000563,
+        "highest_y": 16.169999999999973,
+        "lowest_z": -4.4,
+        "highest_z": 22.994157028775764
+    }
+}

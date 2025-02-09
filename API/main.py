@@ -734,7 +734,7 @@ def building_length_check(building_length, building_length_max):
         return True
 
 def floor_area_Ratio_check(floor_area, floor_area_max):
-    if floor_area != float(-99):
+    if floor_area != -99:
         if float(floor_area) > float(floor_area_max):
             return False
         else:
@@ -757,8 +757,9 @@ plot_map_path = r"data\Plot.shp"
 if __name__ == "__main__":
     if os.path.exists(path):
         if os.path.exists(zoning_map_path):
+            result_from_ata = main(path)
             if os.path.exists(plot_map_path):
-                get_Building_data(path, zoning_map_path, plot_map_path)
+                get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
 
         else:
             print("SHP file missing")

@@ -618,6 +618,37 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "Total floor area ratio check": floor_area_Ratio_check(building_to_land_area,floor_Area_ratio_Max),
             "Ground Floor area ratio check": floor_area_Ratio_check(building_to_land_area, Groundfloor_Area_ratio_Max)
         })
+    
+    checks = {
+    "heights check": heights_check(
+        result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
+        zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
+    "floor number check": floor_number_check(
+        result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],
+        zoning_with_building.get('VOLLGESCHO', 0).values[0]),
+    "fassade length check": fassade_length_check(fassade_length_list, fassadelaenge),
+    "plot distance check": grenzabstand_check(building_Plot, boundary_polygon, Grundgrenzbastand),
+    "basement check": untergeschoss_check(UnderGround, basementMax),
+    "Total floor area ratio check": floor_area_Ratio_check(building_to_land_area, floor_Area_ratio_Max),
+    "Ground Floor area ratio check": floor_area_Ratio_check(building_to_land_area, Groundfloor_Area_ratio_Max)}
+
+    if all(isinstance(value, bool) for value in checks.values()):
+    # Separate passed and failed checks
+        passed_checks = [key for key, value in checks.items() if value is True]
+        failed_checks = [key for key, value in checks.items() if not value]
+
+        # Structure the JSON data
+        output_checks = {
+            "passed_checks": passed_checks,
+            "failed_checks": failed_checks
+        }
+
+    # Export to JSON file
+
+
+
+
+
 
     # # Extract zoning restrictions and add them to building_data
     zoning_restrictions = extract_zoning_restrictions(zoning_with_building)
@@ -631,7 +662,7 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
     # # Visualization
     #plot_building_and_zoning(boundary_95_rotated, plot_map, lv95_coords, vertices_95, zoom_factor=2)
 
-    return building_data
+    return [building_data, output_checks]
 
 def ensure_serializable(obj):
     """ Recursively convert all values to JSON-friendly Python types """
@@ -752,7 +783,8 @@ async def upload_ifc(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     result_from_ata = main(ifc_path)
-    building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
+    building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)[0]
+    building_checks = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)[1]
     print("This is the final building data: ", building_data)
     #Load the existing SHP file
     if os.path.exists(zoning_map_path):
@@ -765,7 +797,7 @@ async def upload_ifc(file: UploadFile = File(...)):
         return {"error": "SHP file is missing on the server"}
 
     try:
-         building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)
+         building_data = get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path)[0]
          print("This is the final building data: ", building_data)
     except Exception as e:
         return {"error": f"Failed to process IFC file: {str(e)}"}
@@ -775,6 +807,7 @@ async def upload_ifc(file: UploadFile = File(...)):
         "message": "IFC file uploaded and processed successfully",
         "rhino": json.dumps(ensure_serializable(building_data), indent=4),
         "data": ensure_serializable(building_data),
+        "checks": ensure_serializable(building_checks),
             # Convert to JSON-safe types
     }
 

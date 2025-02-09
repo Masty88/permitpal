@@ -36,8 +36,8 @@ def extract_data_from_text(our_result_dict, temperature=0):
     jinja2_prompt_template = """
     You are an expert data extractor and compliance checker.
 
-    **Mapping Note:**  
-    Sometimes the attribute names in the input differ from the rule names.  
+    **Mapping Note:**
+    Sometimes the attribute names in the input differ from the rule names.
     Please use the following mapping to compare values:
     - "heighest" corresponds to the rule "Max Height"
     - "lowest" corresponds to "Lowest Point"
@@ -47,27 +47,27 @@ def extract_data_from_text(our_result_dict, temperature=0):
     - "facade_length_1", "facade_length_2", "facade_length_3", "facade_length_4" correspond to "max facade length"
     - "number_of_underground_level" corresponds to "Max number of floors underground"
 
-    **Task:**  
+    **Task:**
     For each attribute in the input data, compare its value against the corresponding rule:
-    1. If the value is within the allowed limit, add the attribute (with its value) to "passed_values".  
-    2. If the value violates the rule (i.e. exceeds a maximum or is below a minimum), add the attribute (with its value) to "failed_values".  
-    3. For each attribute, provide a detailed explanation in full sentences.  
-    - For example, for an attribute that fails, include:  
-        "The attribute 'heighest' has a value of 22.99 which exceeds the maximum allowed value of 20, so it fails."  
-    - For an attribute that passes, include:  
-        "The attribute 'lowest' has a value of -4.4 which is within the allowed range of -5 or above, so it passes."  
+    1. If the value is within the allowed limit, add the attribute (with its value) to "passed_values".
+    2. If the value violates the rule (i.e. exceeds a maximum or is below a minimum), add the attribute (with its value) to "failed_values".
+    3. For each attribute, provide a detailed explanation in full sentences.
+    - For example, for an attribute that fails, include:
+        "The attribute 'heighest' has a value of 22.99 which exceeds the maximum allowed value of 20, so it fails."
+    - For an attribute that passes, include:
+        "The attribute 'lowest' has a value of -4.4 which is within the allowed range of -5 or above, so it passes."
     4. **Do not truncate the explanation.** Provide one complete sentence per attribute.
-    5. Do not forget to evaluate all attributes wheter are those align with rules or not.
-    **Input Data:**  
+
+    **Input Data:**
     {{ our_result }}
 
-    **Rules:**  
+    **Rules:**
     {{ rules }}
 
-    Below is the JSON schema your output must conform to:  
+    Below is the JSON schema your output must conform to:
     {{ format_instructions }}
 
-    **Example Output:**  
+    **Example Output:**
     {
         "passed_values": {
             "lowest": "-4.4 passes because it is within the allowed minimum of -5",

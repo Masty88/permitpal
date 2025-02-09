@@ -594,10 +594,14 @@ def get_Building_data(path, zoning_map_path, result_from_ata, plot_map_path):
             "Anrechenbares Untergeschoss max.": 0,
             "anrechenbares Dachgeschoss max.": 1,
             "Grundgrenzabstand": 5,
-            "check_heights" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
-            "check_floor_number_check" : (result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
-            "fassade_length_check" : True,
-            "grenzabstand_check" : False
+
+            #Here come the checks
+            "check heights" : heights_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],zoning_with_building.get('GEBAEUDEHO', -99).values[0]),
+            "check floor_number_check" : floor_number_check(result_from_ata["LeopoldPointBuilding_01.Full_2x3_total_area_net_summary"]["number_of_floors"],zoning_with_building.get('VOLLGESCHO', 0).values[0]),
+            "check fassadelength" : True,
+            "check plot distances" : False
+            "heighest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["highest_z"],
+            "lowest": result_from_ata["LeopoldPointBuilding_01.Full_2x3_xyz_extremes"]["lowest_z"],
 
 
 
@@ -693,7 +697,8 @@ async def upload_ifc(file: UploadFile = File(...)):
     response_data = {
         "message": "IFC file uploaded and processed successfully",
         "rhino": json.dumps(ensure_serializable(building_data), indent=4),
-        "data": ensure_serializable(building_data)  # Convert to JSON-safe types
+        "data": ensure_serializable(building_data),
+            # Convert to JSON-safe types
     }
 
     # Send to Speckle

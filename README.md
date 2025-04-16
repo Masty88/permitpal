@@ -45,7 +45,7 @@ The project consists of:
 1. **Speckle Token**: Required for 3D model visualization and collaboration
    - The current code contains a placeholder token in `main.py`:
      ```python
-     SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df"  # Replace with your token
+     SPECKLE_TOKEN = ""  # Replace with your token
      STREAM_ID = "ac4a00b20e"  # Replace with your stream ID
      ```
    - You will need to replace this with your own valid Speckle token and stream ID

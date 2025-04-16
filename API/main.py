@@ -28,7 +28,7 @@ from call_llm import extract_data_from_text
 UPLOAD_FOLDER = "uploads"
 # Step 1: Define project variables
 SPECKLE_SERVER = "https://app.speckle.systems/"
-SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df"  # Replace with your token
+SPECKLE_TOKEN = "YOUR TOKEN"  # Replace with your token
 STREAM_ID = "ac4a00b20e"  # Replace with your stream ID
 DATA_ID = "5308d7379d"  # Replace with your data ID
 BRANCH_NAME = "main"  # Or whatever branch you want to use

@@ -171,6 +171,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- ETH Zurich Digital Twin Program for the challenge inspiration
+- Esri R&D Zurich for challenge inspiration
 - AEC Hackathon organizers and sponsors
 - Speckle for providing 3D visualization capabilities

@@ -1,10 +1,10 @@
-# AEC Hackathon Zurich 2025 - Building Data Analysis Tool
+# AEC Hackathon Zurich 2025 - Building Data Analysis Tool ⚠️ ALPHA - WORK IN PROGRESS ⚠️
 
 ## Project Overview
 
 This project addresses the ETH Zurich challenge "from 2D to CO2" - automating the analysis of building data to calculate CO2 footprints. Our solution extracts data from IFC building models, analyzes them against zoning regulations, and provides visualization of building properties and their environmental impact.
 
-![AEC Hackathon](https://opensource.construction/events/aec-hackathon-zurich-2025/)
+![AEC Hackathon](https://aechackathon.com/wp-content/uploads/2023/06/aec-hackathon-logo-300x67.png)
 
 ## Features
 

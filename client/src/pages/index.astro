@@ -274,7 +274,7 @@
   import { SpeckleSubscriptionManager } from "../SpeckleSubscriptionManager.js";
 
   const SPECKLE_SERVER = "https://app.speckle.systems";
-  const SPECKLE_TOKEN = "e7a3b0340b976840e6c6c246b94f8cb83f4fc863df";
+  const SPECKLE_TOKEN = "yoru-token-here"; // Replace with your actual token
   const PYTHON_API = "http://127.0.0.1:8000";
   const loadingScreen = document.querySelector(".loading");
   const form = document.getElementById("uploadForm");
@@ -352,7 +352,7 @@
     let fileBlob: Blob;
 
     if (typeof fileOrPath === "string") {
-      // Recupera il file dal percorso pubblico (es: "/light.ifc")
+
       const response = await fetch(fileOrPath);
       if (!response.ok) {
         throw new Error(`Could not fetch file from ${fileOrPath}`);

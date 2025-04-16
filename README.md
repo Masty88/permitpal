@@ -164,6 +164,7 @@ From the ETH Zurich challenge "from 2D to CO2":
 - [Alp Okan Atakan](https://www.linkedin.com/in/alpokanatakan/)
 - [Niloofar Imani](https://www.linkedin.com/in/niloofarimani/)
 - [Atacan Kural Avgören](https://www.linkedin.com/in/atacan-kural-avg%C3%B6ren-ba7a0314b/)
+- [Duhan Koyuncu](https://www.linkedin.com/in/oduhan/)
 
 ## License
 

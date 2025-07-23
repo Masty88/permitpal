@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project addresses the ETH Zurich challenge "from 2D to CO2" - automating the analysis of building data to calculate CO2 footprints. Our solution extracts data from IFC building models, analyzes them against zoning regulations, and provides visualization of building properties and their environmental impact.
+This project addresses the Esri R&D Zurich challenge  for automating the analysis of building data to calculate CO2 footprints. Our solution extracts data from IFC building models, analyzes them against zoning regulations, and provides visualization of building properties and their environmental impact.
 
 ![AEC Hackathon](https://aechackathon.com/wp-content/uploads/2023/06/aec-hackathon-logo-300x67.png)
 
@@ -11,7 +11,6 @@ This project addresses the ETH Zurich challenge "from 2D to CO2" - automating th
 - IFC file upload and analysis
 - Extraction of building data (height, floors, area)
 - Zoning regulation compliance checking with AI-powered analysis
-- CO2 footprint calculation
 - Data visualization through interactive 3D models
 - Speckle integration for real-time collaboration
 

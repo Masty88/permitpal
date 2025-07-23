@@ -139,14 +139,6 @@ npm run dev
 └── README.md                    # Project documentation
 ```
 
-## Challenges Addressed
-
-From the ETH Zurich challenge "from 2D to CO2":
-- Extracted building components from building documentation
-- Created spatial visualizations of embodied carbon
-- Built data integration pipelines connecting various data sources
-- Used AI to analyze building compliance with zoning regulations
-- Automated assessment of CO2 impact based on building properties
 
 ## Future Improvements
 

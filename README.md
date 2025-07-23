@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project addresses the Esri R&D Zurich challenge  for automating the analysis of building data to calculate CO2 footprints. Our solution extracts data from IFC building models, analyzes them against zoning regulations, and provides visualization of building properties and their environmental impact.
+This project addresses the Esri R&D Zurich challenge  for automating the analysis of building data to . Our solution extracts data from IFC building models, analyzes them against zoning regulations, and provides visualization of building properties and their environmental impact.
 
 ![AEC Hackathon](https://aechackathon.com/wp-content/uploads/2023/06/aec-hackathon-logo-300x67.png)
 
